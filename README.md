@@ -5,8 +5,20 @@ Node process that holds its own `nsec`, talks directly to relays, and
 publishes events. There is **no backend** — bots are plain Nostr clients
 supervised by PM2.
 
-> Looking for the chat app? It lives at [obelisk-app/obelisk](https://github.com/obelisk-app/obelisk).
-> Looking for the relay? [obelisk-app/obelisk-relay](https://github.com/obelisk-app/obelisk-relay).
+<p>
+  <a href="https://github.com/obelisk-app/obelisk-bots/stargazers"><img src="https://img.shields.io/github/stars/obelisk-app/obelisk-bots?style=flat&logo=github&color=b4f953&labelColor=0a0a0a" alt="GitHub stars" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/obelisk-app/obelisk-bots?style=flat&color=b4f953&labelColor=0a0a0a" alt="License" /></a>
+</p>
+
+## The Obelisk family
+
+| Repo | What |
+|------|------|
+| [obelisk-app/obelisk](https://github.com/obelisk-app/obelisk) | The chat app (relay-only) |
+| [obelisk-app/obelisk-relay](https://github.com/obelisk-app/obelisk-relay) | NIP-29 groups relay |
+| [obelisk-app/obelisk-sfu](https://github.com/obelisk-app/obelisk-sfu) | mediasoup SFU for voice |
+| [**obelisk-app/obelisk-bots**](https://github.com/obelisk-app/obelisk-bots) | This repo — bots toolkit |
+| [obelisk-app/obelisk-classic](https://github.com/obelisk-app/obelisk-classic) | The original centralized stack |
 
 ## What's in here
 
