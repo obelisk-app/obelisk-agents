@@ -24,8 +24,9 @@ supervised by PM2.
 
 ```
 bots/                 one .mjs file per long-running bot
-  price-bot.mjs           BTC ticker (publishes kind:0, replies to !btc / !ath / ...)
+  price-bot.mjs           BTC/USD ticker (CoinGecko; replies to !btc / !ath / ...)
   price-bot.cleanup.mjs   one-shot cleanup of duplicate startup hellos
+  sat-ars-bot.mjs         sat/ARS ticker (yadio.io; replies to !sat / !btc / !ars / ...)
 tools/                management utilities you run by hand or from a coding agent
   new-bot.mjs             scaffold a new bot + generate its nsec
   whoami.mjs              decode an nsec env var → npub
@@ -141,6 +142,8 @@ admin adds it to a group it's also a member bot).
   Code, Codex, Cursor) to drive this repo.
 - [docs/managing-bots.md](./docs/managing-bots.md) — full guide to
   creating, configuring, and managing bots from the CLI.
+- [docs/price-bot.md](./docs/price-bot.md) — BTC/USD bot operational guide.
+- [docs/sat-ars-bot.md](./docs/sat-ars-bot.md) — sat/ARS bot operational guide.
 - [docs/admin-bot.md](./docs/admin-bot.md) — design pattern for admin /
   moderation bots.
 - [docs/discovery.md](./docs/discovery.md) — how to enumerate groups on a

@@ -28,14 +28,18 @@ module.exports = {
         NODE_ENV: 'production',
       },
     },
+    {
+      name: 'obelisk-sat-ars-bot',
+      script: 'bots/sat-ars-bot.mjs',
+      cwd,
+      node_args: nodeArgs,
+      watch: false,
+      autorestart: true,
+      max_restarts: 10,
+      env: {
+        NODE_ENV: 'production',
+      },
+    },
     // ── Add additional bots here ──
-    // {
-    //   name: 'obelisk-welcome-bot',
-    //   script: 'bots/welcome-bot.mjs',
-    //   cwd,
-    //   node_args: nodeArgs,
-    //   watch: false,
-    //   autorestart: true,
-    // },
   ],
 };
