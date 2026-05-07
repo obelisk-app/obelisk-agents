@@ -17,9 +17,9 @@
     "grant-admin": "node --env-file-if-exists=.env.local tools/grant-admin.mjs",
     "add-member": "node --env-file-if-exists=.env.local tools/add-member.mjs",
     "list-groups": "node tools/list-groups.mjs",
-    "pm2:start": "pm2 start ecosystem.config.js && pm2 save",
-    "pm2:stop": "pm2 stop ecosystem.config.js",
-    "pm2:restart": "pm2 restart ecosystem.config.js",
+    "pm2:start": "pm2 start ecosystem.config.cjs && pm2 save",
+    "pm2:stop": "pm2 stop ecosystem.config.cjs",
+    "pm2:restart": "pm2 restart ecosystem.config.cjs",
     "pm2:logs": "pm2 logs"
   },
   "dependencies": {
