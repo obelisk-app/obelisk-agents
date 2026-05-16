@@ -40,6 +40,18 @@ module.exports = {
         NODE_ENV: 'production',
       },
     },
+    {
+      name: 'obelisk-zap-bot',
+      script: 'bots/zap-bot.mjs',
+      cwd,
+      node_args: nodeArgs,
+      watch: false,
+      autorestart: true,
+      max_restarts: 10,
+      env: {
+        NODE_ENV: 'production',
+      },
+    },
     // ── Add additional bots here ──
   ],
 };

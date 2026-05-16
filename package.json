@@ -11,6 +11,7 @@
   "scripts": {
     "price-bot": "node --env-file-if-exists=.env.local bots/price-bot.mjs",
     "price-bot:cleanup": "node --env-file-if-exists=.env.local bots/price-bot.cleanup.mjs",
+    "zap-bot": "node --env-file-if-exists=.env.local bots/zap-bot.mjs",
     "new-bot": "node tools/new-bot.mjs",
     "whoami": "node --env-file-if-exists=.env.local tools/whoami.mjs",
     "set-profile": "node --env-file-if-exists=.env.local tools/set-profile.mjs",

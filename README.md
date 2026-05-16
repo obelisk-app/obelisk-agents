@@ -27,6 +27,7 @@ bots/                 one .mjs file per long-running bot
   price-bot.mjs           BTC/USD ticker (CoinGecko; replies to !btc / !ath / ...)
   price-bot.cleanup.mjs   one-shot cleanup of duplicate startup hellos
   sat-ars-bot.mjs         sat/ARS ticker (yadio.io; replies to !sat / !btc / !ars / ...)
+  zap-bot.mjs             [WIP] announces zap receipts/reactions with dynamic group discovery
 tools/                management utilities you run by hand or from a coding agent
   new-bot.mjs             scaffold a new bot + generate its nsec
   whoami.mjs              decode an nsec env var → npub
@@ -34,7 +35,15 @@ tools/                management utilities you run by hand or from a coding agen
   grant-admin.mjs         publish kind 9000 to add a pubkey as admin (or any role)
   add-member.mjs          publish kind 9000 to add a pubkey as plain member
   list-groups.mjs         enumerate kind 39000 group metadata on a relay
+  probe-relays.mjs        scan groups across multiple relays with AUTH
+  probe-zaps.mjs          query kind 9735 / 9734 history across relays
+  probe-write.mjs         per-kind write permission check against a relay
+  simulate-zap.mjs        publish a synthetic kind 9735 to test the announcer
+  show-profile.mjs        read back each relay's stored kind:0 for a pubkey
+  inspect-events.mjs      dump every kind in a given (relay, groupId) window
+  recent-all.mjs          tally every kind across all groups on a relay
 lib/                  shared helpers (parseSecret, createPool with NIP-42 auth)
+  group-watcher.mjs       dynamic NIP-29 group discovery (kind 39000 watcher)
 ecosystem.config.js   PM2 process list — one entry per bot
 .env.example          copy to .env.local and fill in
 docs/                 design notes (taxonomy, admin-bot pattern, discovery)
@@ -144,6 +153,7 @@ admin adds it to a group it's also a member bot).
   creating, configuring, and managing bots from the CLI.
 - [docs/price-bot.md](./docs/price-bot.md) — BTC/USD bot operational guide.
 - [docs/sat-ars-bot.md](./docs/sat-ars-bot.md) — sat/ARS bot operational guide.
+- [docs/zap-bot.md](./docs/zap-bot.md) — NIP-57 zap announcer guide.
 - [docs/admin-bot.md](./docs/admin-bot.md) — design pattern for admin /
   moderation bots.
 - [docs/discovery.md](./docs/discovery.md) — how to enumerate groups on a
