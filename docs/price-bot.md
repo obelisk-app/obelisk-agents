@@ -30,6 +30,7 @@ All via `.env.local` (gitignored, read by PM2 through Node's
 | `BOT_CHAT_EVERY_N_TICKS` | no | `0` (off) | If >0, post a kind 9 summary every N **price-change** ticks (not wall-clock ticks). |
 | `BOT_DISPLAY` | no | `BTC ${price}` | Template for kind:0 `name`. `${price}` interpolated with comma-formatted USD. |
 | `BOT_GROUP_ID` | no | — | **Legacy.** Treated as a single group on the first `BOT_RELAYS` entry. Prefer `BOT_GROUPS`. |
+| `BOT_STATE_PATH` | no | `state/obelisk-price-bot-state.json` | Override the persisted join/greet state file. |
 
 ### Discovering group ids
 

@@ -28,6 +28,8 @@ with the admin role attached on top.
 - **Identity**: bots own their nsec. Never reuse a human's nsec for a bot.
 - **Secrets**: live in `.env.local` (gitignored). PM2 reads them via Node's
   `--env-file-if-exists` flag, set as `node_args` in the PM2 entry.
+- **State**: runtime join/greet JSON lives under `state/` by default. Use
+  `OBELISK_BOTS_STATE_DIR` or per-bot `*_STATE_PATH` variables to override it.
 - **Supervisor**: PM2. Each bot is its own PM2 process so it can be restarted,
   logged, and monitored independently of the Next.js app.
 - **Relay**: `wss://relay.obelisk.ar` for all group/chat events. Public relays
@@ -52,7 +54,11 @@ tools/
 
 lib/
 ├── secret.mjs              # parseSecret, identityFromEnv, newIdentity
+├── state.mjs               # runtime state path helper
 └── pool.mjs                # SimplePool factory with NIP-42 auto-AUTH
+
+state/
+└── *.json                  # runtime state, ignored by git
 
 docs/
 ├── README.md               # this file — taxonomy, lifecycle, conventions

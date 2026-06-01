@@ -24,21 +24,15 @@
 //   SAT_ARS_BOT_CHAT_EVERY_N_TICKS  default 0 (off).
 
 import { finalizeEvent } from 'nostr-tools';
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
 import { identityFromEnv } from '../lib/secret.mjs';
 import { createPool, parseGroupList } from '../lib/pool.mjs';
+import { createStateStore } from '../lib/state.mjs';
 
-const STATE_PATH = path.join(os.homedir(), '.obelisk-sat-ars-bot-state.json');
-function loadState() {
-  try { return JSON.parse(fs.readFileSync(STATE_PATH, 'utf8')); } catch { return {}; }
-}
-function saveState(s) {
-  try { fs.writeFileSync(STATE_PATH, JSON.stringify(s, null, 2)); } catch (err) {
-    console.warn('[sat-ars-bot] state save failed:', err.message);
-  }
-}
+const { loadState, saveState, statePath } = createStateStore({
+  fileName: 'obelisk-sat-ars-bot-state.json',
+  envName: 'SAT_ARS_BOT_STATE_PATH',
+  logPrefix: 'sat-ars-bot',
+});
 
 const ENV_NAME = process.env.SAT_ARS_BOT_NSEC ? 'SAT_ARS_BOT_NSEC' : 'BOT_NSEC';
 
@@ -125,6 +119,7 @@ async function main() {
   console.log(`[sat-ars-bot] pubkey npub: ${npub}`);
   console.log(`[sat-ars-bot] relays:      ${RELAYS.join(', ')}`);
   console.log(`[sat-ars-bot] groups:      ${GROUPS.map((g) => `${g.relay}|${g.groupId}`).join(', ') || '(none)'}`);
+  console.log(`[sat-ars-bot] state:       ${statePath}`);
   console.log(`[sat-ars-bot] interval:    ${INTERVAL}ms; chat every ${CHAT_EVERY_N} ticks`);
 
   const pool = createPool(sk);

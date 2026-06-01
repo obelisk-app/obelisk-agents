@@ -124,10 +124,11 @@ pm2 describe obelisk-price-bot         # cwd, script path, env, log paths
 pm2 monit                              # live process monitor (interactive)
 ```
 
-The price-bot stores join/greeted state at
-`~/.obelisk-price-bot-state.json` so PM2 restarts don't re-spam group
-hellos. Delete that file if you want a clean re-greet (then expect one
-hello per group on next start).
+Bots store join/greeted state under the repo-local `state/` directory by
+default, for example `state/obelisk-price-bot-state.json`. Set
+`OBELISK_BOTS_STATE_DIR` or a per-bot `*_STATE_PATH` override to move it.
+Delete the relevant state file if you want a clean re-greet (then expect
+one hello per group on next start).
 
 ## Rules of thumb for agents
 
@@ -164,7 +165,8 @@ hello per group on next start).
 - **No web UI.** Management is CLI-only. If you want a dashboard,
   point a separate tool at `pm2 jlist` JSON output.
 - **No persistent message store.** Bots are stateless except for the
-  small JSON files they choose to write to `$HOME`.
+  small JSON files they write to the ignored `state/` directory, or to a
+  configured state path.
 - **No relay-side enforcement.** Whitelisting, role checks, and rate
   limits live on the relay (see
   [obelisk-app/obelisk-relay](https://github.com/obelisk-app/obelisk-relay)).

@@ -35,6 +35,7 @@ sharing an identity makes them fight over it.
 | `SAT_ARS_BOT_INTERVAL_MS` | no | `60000` | yadio refreshes ~every 60s; don't go lower. |
 | `SAT_ARS_BOT_DISPLAY` | no | `sat ${price} ARS` | template; `${price}` = ARS per sat to 2 decimals. |
 | `SAT_ARS_BOT_CHAT_EVERY_N_TICKS` | no | `0` (off) | post a kind 9 summary every N price-change ticks. |
+| `SAT_ARS_BOT_STATE_PATH` | no | `state/obelisk-sat-ars-bot-state.json` | Override the persisted join/greet state file. |
 
 ## Slash commands
 

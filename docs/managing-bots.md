@@ -150,10 +150,10 @@ pm2 logs obelisk-<name> --lines 50
 ```
 
 For the price-bot specifically, the persisted state file
-(`~/.obelisk-price-bot-state.json`) tracks which groups have already
-received hellos. Delete it to force a re-greet on next restart, or run
-`npm run price-bot:cleanup` to issue NIP-09 deletions for previous
-hellos before re-greeting.
+(`state/obelisk-price-bot-state.json` by default, or `BOT_STATE_PATH`)
+tracks which groups have already received hellos. Delete it to force a
+re-greet on next restart, or run `npm run price-bot:cleanup` to issue
+NIP-09 deletions for previous hellos before re-greeting.
 
 ## Rotating a bot's nsec
 

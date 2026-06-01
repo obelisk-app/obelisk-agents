@@ -25,22 +25,16 @@
 // Configuration — see .env.example.
 
 import { finalizeEvent, nip19 } from 'nostr-tools';
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
 import { identityFromEnv } from '../lib/secret.mjs';
 import { createPool, parseGroupList } from '../lib/pool.mjs';
 import { createGroupWatcher } from '../lib/group-watcher.mjs';
+import { createStateStore } from '../lib/state.mjs';
 
-const STATE_PATH = path.join(os.homedir(), '.obelisk-zap-bot-state.json');
-function loadState() {
-  try { return JSON.parse(fs.readFileSync(STATE_PATH, 'utf8')); } catch { return {}; }
-}
-function saveState(s) {
-  try { fs.writeFileSync(STATE_PATH, JSON.stringify(s, null, 2)); } catch (err) {
-    console.warn('[zap-bot] state save failed:', err.message);
-  }
-}
+const { loadState, saveState, statePath } = createStateStore({
+  fileName: 'obelisk-zap-bot-state.json',
+  envName: 'ZAP_BOT_STATE_PATH',
+  logPrefix: 'zap-bot',
+});
 
 const ENV_NAME = process.env.ZAP_BOT_NSEC ? 'ZAP_BOT_NSEC' : 'BOT_NSEC';
 
@@ -222,6 +216,7 @@ async function main() {
   console.log(`[zap-bot] relays:          ${RELAYS.join(', ')}`);
   console.log(`[zap-bot] static groups:   ${STATIC_GROUPS.map((g) => `${g.relay}|${g.groupId}`).join(', ') || '(none)'}`);
   console.log(`[zap-bot] listen relays:   ${LISTEN_RELAYS.join(', ') || '(none)'}`);
+  console.log(`[zap-bot] state:           ${statePath}`);
   console.log(`[zap-bot] zap kinds:       ${ZAP_KINDS.join(', ')}`);
   console.log(`[zap-bot] refresh:         ${REFRESH_MS}ms;  reconnect base ${RECONNECT_BASE_MS}ms`);
   console.log(`[zap-bot] min sats:        ${MIN_SATS}`);

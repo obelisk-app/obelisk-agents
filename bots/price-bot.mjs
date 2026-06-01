@@ -28,21 +28,15 @@
 // first BOT_RELAYS entry.
 
 import { finalizeEvent, nip19 } from 'nostr-tools';
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
 import { identityFromEnv } from '../lib/secret.mjs';
 import { createPool, parseGroupList } from '../lib/pool.mjs';
+import { createStateStore } from '../lib/state.mjs';
 
-const STATE_PATH = path.join(os.homedir(), '.obelisk-price-bot-state.json');
-function loadState() {
-  try { return JSON.parse(fs.readFileSync(STATE_PATH, 'utf8')); } catch { return {}; }
-}
-function saveState(s) {
-  try { fs.writeFileSync(STATE_PATH, JSON.stringify(s, null, 2)); } catch (err) {
-    console.warn('[price-bot] state save failed:', err.message);
-  }
-}
+const { loadState, saveState, statePath } = createStateStore({
+  fileName: 'obelisk-price-bot-state.json',
+  envName: 'BOT_STATE_PATH',
+  logPrefix: 'price-bot',
+});
 
 const INTERVAL = Number(process.env.BOT_INTERVAL_MS) || 120_000;
 const TEMPLATE = process.env.BOT_DISPLAY || 'BTC ${price}';
@@ -117,6 +111,7 @@ async function main() {
   console.log(`[price-bot] pubkey npub: ${npub}`);
   console.log(`[price-bot] relays:      ${RELAYS.join(', ')}`);
   console.log(`[price-bot] groups:      ${GROUPS.map((g) => `${g.relay}|${g.groupId}`).join(', ') || '(none)'}`);
+  console.log(`[price-bot] state:       ${statePath}`);
   console.log(`[price-bot] interval:    ${INTERVAL}ms; chat every ${CHAT_EVERY_N} ticks`);
 
   const pool = createPool(sk);

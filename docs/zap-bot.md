@@ -72,6 +72,7 @@ identity across bots.
 | `ZAP_BOT_SEEN_MAX` | no | `10000` | FIFO dedup-cache cap; oldest IDs evict first. |
 | `ZAP_BOT_MIN_SATS` | no | `1` | suppress zaps below this amount. |
 | `ZAP_BOT_TEMPLATE` | no | `⚡ ${sender} sent ${amount} ${unit} to ${recipient}` | tokens: `${sender}`, `${recipient}`, `${amount}`, `${unit}` (`satoshi`/`satoshis`). |
+| `ZAP_BOT_STATE_PATH` | no | `state/obelisk-zap-bot-state.json` | Override the persisted join/greet state file. |
 
 ### Static vs dynamic groups
 
@@ -176,6 +177,6 @@ Then add `ZAP_BOT_GROUPS=wss://relay.obelisk.ar|<groupId>` to
 ## Notes & limits
 
 - **In-memory dedup**: the `seen` Set survives only within a single process. PM2 restarts can re-announce zaps that arrive again within 5 seconds of startup.
-- **No state file for zap events**: only the join/greeted state is persisted (in `~/.obelisk-zap-bot-state.json`).
+- **No state file for zap events**: only the join/greeted state is persisted (in `state/obelisk-zap-bot-state.json` by default, or `ZAP_BOT_STATE_PATH`).
 - **No anti-spam rate limiting**: a zap-spammer can flood the group. Set `ZAP_BOT_MIN_SATS` to filter dust.
 - **Bot's own zaps are skipped** (sender == bot pk). Zaps **to** the bot are also skipped.
