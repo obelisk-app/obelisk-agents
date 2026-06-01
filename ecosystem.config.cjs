@@ -13,6 +13,11 @@
 
 const cwd = __dirname;
 const nodeArgs = `--env-file-if-exists=${cwd}/.env.local`;
+const stateDir = '/var/lib/obelisk-bots/state';
+const baseEnv = {
+  NODE_ENV: 'production',
+  OBELISK_BOTS_STATE_DIR: stateDir,
+};
 
 module.exports = {
   apps: [
@@ -24,9 +29,7 @@ module.exports = {
       watch: false,
       autorestart: true,
       max_restarts: 10,
-      env: {
-        NODE_ENV: 'production',
-      },
+      env: baseEnv,
     },
     {
       name: 'obelisk-sat-ars-bot',
@@ -36,9 +39,7 @@ module.exports = {
       watch: false,
       autorestart: true,
       max_restarts: 10,
-      env: {
-        NODE_ENV: 'production',
-      },
+      env: baseEnv,
     },
     {
       name: 'obelisk-zap-bot',
@@ -48,9 +49,7 @@ module.exports = {
       watch: false,
       autorestart: true,
       max_restarts: 10,
-      env: {
-        NODE_ENV: 'production',
-      },
+      env: baseEnv,
     },
     // ── Add additional bots here ──
   ],
