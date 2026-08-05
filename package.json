@@ -18,6 +18,8 @@
     "grant-admin": "node --env-file-if-exists=.env.local tools/grant-admin.mjs",
     "add-member": "node --env-file-if-exists=.env.local tools/add-member.mjs",
     "list-groups": "node tools/list-groups.mjs",
+    "manager": "node --env-file-if-exists=.env.local server/index.mjs",
+    "frontend:build": "cd frontend && npm install && npm run build",
     "pm2:start": "pm2 start ecosystem.config.cjs && pm2 save",
     "pm2:stop": "pm2 stop ecosystem.config.cjs",
     "pm2:restart": "pm2 restart ecosystem.config.cjs",

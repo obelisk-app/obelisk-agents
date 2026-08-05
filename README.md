@@ -44,10 +44,33 @@ tools/                management utilities you run by hand or from a coding agen
   recent-all.mjs          tally every kind across all groups on a relay
 lib/                  shared helpers (parseSecret, createPool with NIP-42 auth)
   group-watcher.mjs       dynamic NIP-29 group discovery (kind 39000 watcher)
+server/               management API (Nostr auth, PM2 control, env editor, Codex operator)
+frontend/             management UI (Preact + Vite + Tailwind) → https://bots.obelisk.ar
 ecosystem.config.js   PM2 process list — one entry per bot
 .env.example          copy to .env.local and fill in
 docs/                 design notes (taxonomy, admin-bot pattern, discovery)
 ```
+
+## Web manager — bots.obelisk.ar
+
+The fleet has a web control plane at **https://bots.obelisk.ar** (code in
+`server/` + `frontend/`, reusing the obelisk-relay frontend stack and
+design). Sign in with the admin Nostr key (NIP-07 extension or nsec —
+challenge-signed kind 22242, same as the relay admin panel). It can:
+
+- start / stop / restart every bot (PM2 under the hood) and tail logs
+- edit **all** settings and relay/group lists (`.env.local`, secrets
+  write-only and never sent to the browser)
+- publish bot profiles (kind 0), browse groups on a relay, scaffold new
+  bots
+- run the **Operator**: a Codex CLI agent with shell access to this repo,
+  usable with either a **ChatGPT/Codex subscription** or **API credits**
+  (it rides `~/.codex/auth.json`, hermes-agent style) — it follows
+  [AGENTS.md](./AGENTS.md) and [docs/building-bots.md](./docs/building-bots.md)
+
+Admin allow-list: `MANAGER_ADMIN_NPUBS` in `.env.local` (defaults to the
+owner npub). Local dev: `npm run frontend:build && npm run manager`,
+then open http://127.0.0.1:3021.
 
 ## Install
 

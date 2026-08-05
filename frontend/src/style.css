@@ -1,0 +1,187 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Obelisk Design Tokens (shared with obelisk-relay) ── */
+:root {
+  --color-bg-primary: #0a0a0a;
+  --color-bg-secondary: #171717;
+  --color-bg-tertiary: #1a1a1a;
+  --color-text-primary: #fafafa;
+  --color-text-secondary: #a3a3a3;
+  --color-accent: #b4f953;
+  --color-accent-hover: #c5ff6e;
+  --color-border: #262626;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+::selection {
+  background: rgba(180, 249, 83, 0.25);
+  color: #fafafa;
+}
+
+/* ── Custom Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #444; }
+
+/* ── Grid Background ── */
+.lc-grid-bg {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* ── Cards ── */
+.lc-card {
+  background: #171717;
+  border: 1px solid #262626;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+.lc-card:hover {
+  border-color: #3a3a3a;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+/* ── Glow ── */
+.lc-glow { box-shadow: 0 0 60px rgba(180,249,83,0.08), 0 0 120px rgba(180,249,83,0.04); }
+.lc-glow-text { text-shadow: 0 0 40px rgba(180,249,83,0.3); }
+
+/* ── Pill Buttons ── */
+.lc-pill-primary {
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 9999px; padding: 8px 20px; font-weight: 600;
+  background: #b4f953; color: #0a0a0a;
+  transition: all 0.2s ease; cursor: pointer; border: none;
+}
+.lc-pill-primary:hover { background: #c5ff6e; box-shadow: 0 0 20px rgba(180,249,83,0.3); }
+.lc-pill-primary:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+
+.lc-pill-secondary {
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 9999px; padding: 8px 20px; font-weight: 600;
+  background: #262626; color: #fafafa;
+  transition: all 0.2s ease; cursor: pointer; border: none;
+}
+.lc-pill-secondary:hover { background: #333; }
+.lc-pill-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.lc-pill-danger {
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 9999px; padding: 8px 20px; font-weight: 600;
+  background: rgba(239,68,68,0.12); color: #f87171;
+  border: 1px solid rgba(239,68,68,0.3);
+  transition: all 0.2s ease; cursor: pointer;
+}
+.lc-pill-danger:hover { background: rgba(239,68,68,0.2); }
+.lc-pill-danger:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Inputs ── */
+.lc-input {
+  width: 100%;
+  background: #0a0a0a;
+  border: 1px solid #262626;
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #fafafa;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+}
+.lc-input:focus { outline: none; border-color: #b4f953; }
+.lc-input::placeholder { color: #525252; }
+.lc-input:disabled { opacity: 0.5; }
+
+/* ── Spinner ── */
+.lc-spinner {
+  width: 20px; height: 20px;
+  border: 2px solid #262626; border-top-color: #b4f953;
+  border-radius: 50%;
+  animation: lc-spin 0.8s linear infinite;
+}
+
+/* ── Skeleton ── */
+.lc-skeleton {
+  background: linear-gradient(90deg, #1a1a1a 25%, #262626 50%, #1a1a1a 75%);
+  background-size: 400% 100%;
+  animation: lc-skeleton 1.8s ease-in-out infinite;
+  border-radius: 12px;
+}
+@keyframes lc-skeleton {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Status dots ── */
+.lc-dot { width: 10px; height: 10px; border-radius: 9999px; flex-shrink: 0; }
+.lc-dot-online { background: #b4f953; box-shadow: 0 0 10px rgba(180,249,83,0.6); animation: glow-pulse 2.5s ease-in-out infinite; }
+.lc-dot-stopped { background: #525252; }
+.lc-dot-errored { background: #ef4444; box-shadow: 0 0 10px rgba(239,68,68,0.5); }
+
+/* ── Console / log viewer ── */
+.lc-console {
+  background: #0a0a0a;
+  border: 1px solid #262626;
+  border-radius: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 12px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Markdown (docs) ── */
+.lc-md { color: #d4d4d4; line-height: 1.7; font-size: 15px; }
+.lc-md h1, .lc-md h2, .lc-md h3 { color: #fafafa; font-weight: 700; margin: 1.4em 0 0.5em; }
+.lc-md h1 { font-size: 1.6em; }
+.lc-md h2 { font-size: 1.3em; border-bottom: 1px solid #262626; padding-bottom: 6px; }
+.lc-md h3 { font-size: 1.1em; }
+.lc-md p { margin: 0.7em 0; }
+.lc-md a { color: #b4f953; }
+.lc-md a:hover { text-decoration: underline; }
+.lc-md code {
+  background: #1a1a1a; border: 1px solid #262626; border-radius: 4px;
+  padding: 1px 5px; font-size: 0.88em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.lc-md pre {
+  background: #111; border: 1px solid #262626; border-radius: 8px;
+  padding: 12px; overflow-x: auto; margin: 0.8em 0;
+}
+.lc-md pre code { background: none; border: none; padding: 0; }
+.lc-md ul, .lc-md ol { padding-left: 1.5em; margin: 0.6em 0; }
+.lc-md ul { list-style: disc; }
+.lc-md ol { list-style: decimal; }
+.lc-md table { border-collapse: collapse; margin: 0.8em 0; width: 100%; display: block; overflow-x: auto; }
+.lc-md th, .lc-md td { border: 1px solid #262626; padding: 6px 10px; text-align: left; }
+.lc-md th { background: #171717; }
+.lc-md blockquote { border-left: 3px solid #b4f953; padding-left: 12px; color: #a3a3a3; margin: 0.8em 0; }
+
+/* ── Animations ── */
+@keyframes lc-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes glow-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up { animation: fade-in-up 0.6s ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

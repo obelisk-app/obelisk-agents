@@ -52,5 +52,18 @@ module.exports = {
       env: baseEnv,
     },
     // ── Add additional bots here ──
+
+    // Management web UI + API (bots.obelisk.ar). Not a bot: it is the
+    // control plane for everything above.
+    {
+      name: 'obelisk-bots-manager',
+      script: 'server/index.mjs',
+      cwd,
+      node_args: nodeArgs,
+      watch: false,
+      autorestart: true,
+      max_restarts: 10,
+      env: baseEnv,
+    },
   ],
 };
