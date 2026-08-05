@@ -1,7 +1,7 @@
 # Building a bot — the complete guide
 
 Written for **coding agents** (Codex, Claude Code, Cursor, the Operator
-page on bots.obelisk.ar) and humans alike. Follow it top to bottom and
+page on agents.obelisk.ar) and humans alike. Follow it top to bottom and
 you will ship a working, supervised, discoverable Nostr bot without
 opening a browser.
 

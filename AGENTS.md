@@ -2,7 +2,7 @@
 
 Instructions for coding agents working in this repo (Codex reads this
 file automatically — including runs launched from the Operator page on
-https://bots.obelisk.ar).
+https://agents.obelisk.ar).
 
 **Read these two documents before changing anything:**
 
@@ -22,4 +22,4 @@ Non-negotiables (details in the docs above):
   bots/<name>.mjs`) before touching PM2.
 - The management web UI lives in `server/` (Node, no framework) and
   `frontend/` (Preact + Vite + Tailwind); it is deployed as the
-  `obelisk-agents-manager` PM2 app on port 3021 → https://bots.obelisk.ar.
+  `obelisk-agents-manager` PM2 app on port 3021 → https://agents.obelisk.ar.

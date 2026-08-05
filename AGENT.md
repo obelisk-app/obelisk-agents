@@ -163,7 +163,7 @@ one hello per group on next start).
 ## What this repo intentionally does NOT do
 
 - **No message store or backend for the bots themselves.** The web UI at
-  https://bots.obelisk.ar (`server/` + `frontend/`) is a *control plane*
+  https://agents.obelisk.ar (`server/` + `frontend/`) is a *control plane*
   — it supervises PM2, edits `.env.local`, and runs the Operator agent;
   bots never depend on it and keep running if it dies.
 - **No persistent message store.** Bots are stateless except for the

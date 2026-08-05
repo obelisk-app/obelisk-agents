@@ -5,7 +5,7 @@ Node process that holds its own `nsec`, talks directly to relays, and
 publishes events. Two types exist: **bots** (scripted — tickers, announcers)
 and **agents** (LLM-connected members that only hear whitelisted users; see
 [docs/agents.md](./docs/agents.md)). All are plain Nostr clients supervised
-by PM2, managed from https://bots.obelisk.ar.
+by PM2, managed from https://agents.obelisk.ar.
 
 <p>
   <a href="https://github.com/obelisk-app/obelisk-agents/stargazers"><img src="https://img.shields.io/github/stars/obelisk-app/obelisk-agents?style=flat&logo=github&color=b4f953&labelColor=0a0a0a" alt="GitHub stars" /></a>
@@ -48,15 +48,16 @@ tools/                management utilities you run by hand or from a coding agen
 lib/                  shared helpers (parseSecret, createPool with NIP-42 auth)
   group-watcher.mjs       dynamic NIP-29 group discovery (kind 39000 watcher)
 server/               management API (Nostr auth, PM2 control, env editor, Codex operator)
-frontend/             management UI (Preact + Vite + Tailwind) → https://bots.obelisk.ar
+frontend/             management UI (Preact + Vite + Tailwind) → https://agents.obelisk.ar
 ecosystem.config.js   PM2 process list — one entry per bot
 .env.example          copy to .env.local and fill in
 docs/                 design notes (taxonomy, admin-bot pattern, discovery)
 ```
 
-## Web manager — bots.obelisk.ar
+## Web manager — agents.obelisk.ar
 
-The fleet has a web control plane at **https://bots.obelisk.ar** (code in
+The fleet has a web control plane at **https://agents.obelisk.ar** (the older
+bots.obelisk.ar URL still works as an alias) (code in
 `server/` + `frontend/`, reusing the obelisk-relay frontend stack and
 design). Sign in with the admin Nostr key (NIP-07 extension or nsec —
 challenge-signed kind 22242, same as the relay admin panel). It can:

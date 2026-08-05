@@ -11,7 +11,7 @@ All runtime behavior lives in `lib/agent-bot.mjs`; a concrete agent under
 
 ```bash
 npm run new-bot -- helper --agent      # CLI
-# or the "New bot → Agent" wizard on https://bots.obelisk.ar,
+# or the "New bot → Agent" wizard on https://agents.obelisk.ar,
 # which can also hand the description to Codex to refine it
 ```
 

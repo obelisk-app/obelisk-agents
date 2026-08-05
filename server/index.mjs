@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// bots.obelisk.ar — management server for the Obelisk bot fleet.
+// agents.obelisk.ar — management server for the Obelisk bot fleet.
 // Plain node:http, no framework: same zero-dependency spirit as the bots.
 //
 //   node --env-file-if-exists=.env.local server/index.mjs

@@ -49,7 +49,7 @@ export function Layout({ npub, path, onLogout, children }: {
       </header>
       <main class="max-w-6xl mx-auto px-4 py-8">{children}</main>
       <footer class="max-w-6xl mx-auto px-4 pb-8 text-xs text-lc-muted/60">
-        bots.obelisk.ar · part of the{' '}
+        agents.obelisk.ar · part of the{' '}
         <a class="hover:text-lc-green" href="https://github.com/obelisk-app" target="_blank" rel="noreferrer">
           Obelisk family
         </a>

@@ -83,7 +83,7 @@ export function applyEnvChanges({ set = {}, unset = [] } = {}) {
   });
   if (pending.size > 0) {
     if (out.length && out[out.length - 1].trim() !== '') out.push('');
-    out.push('# ── added via bots.obelisk.ar manager ──');
+    out.push('# ── added via agents.obelisk.ar manager ──');
     for (const [k, v] of pending) out.push(`${k}=${v}`);
   }
   const text = out.join('\n');

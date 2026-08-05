@@ -73,7 +73,7 @@ module.exports = {
     },
     // ── Add additional bots here ──
 
-    // Management web UI + API (bots.obelisk.ar). Not a bot: it is the
+    // Management web UI + API (agents.obelisk.ar). Not a bot: it is the
     // control plane for everything above.
     {
       name: 'obelisk-agents-manager',
