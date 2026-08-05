@@ -5,6 +5,7 @@ import './style.css'
 import { api } from './api'
 import { Login } from './components/Login'
 import { Layout } from './components/Layout'
+import { Toasts } from './components/toast'
 import { Dashboard } from './components/Dashboard'
 import { BotDetail } from './components/BotDetail'
 import { Settings } from './components/Settings'
@@ -29,16 +30,19 @@ function App() {
   if (!session.authed) return <Login onLogin={check} />
 
   return (
-    <Layout npub={session.npub!} path={path} onLogout={() => setSession({ authed: false })}>
-      <Router onChange={(e) => setPath(e.url)}>
-        <Dashboard path="/" />
-        <BotDetail path="/bots/:name" name="" />
-        <Settings path="/settings" />
-        <Operator path="/operator" />
-        <Docs path="/docs" />
-        <Docs path="/docs/:file" />
-      </Router>
-    </Layout>
+    <>
+      <Toasts />
+      <Layout npub={session.npub!} path={path} onLogout={() => setSession({ authed: false })}>
+        <Router onChange={(e) => setPath(e.url)}>
+          <Dashboard path="/" />
+          <BotDetail path="/bots/:name" name="" />
+          <Settings path="/settings" />
+          <Operator path="/operator" />
+          <Docs path="/docs" />
+          <Docs path="/docs/:file" />
+        </Router>
+      </Layout>
+    </>
   )
 }
 

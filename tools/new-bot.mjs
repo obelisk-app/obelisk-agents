@@ -20,9 +20,11 @@ import { newIdentity } from '../lib/secret.mjs';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 
-const rawName = process.argv[2];
+const isAgent = process.argv.includes('--agent');
+const rawName = process.argv.slice(2).find((a) => !a.startsWith('--'));
 if (!rawName) {
-  console.error('Usage: npm run new-bot -- <name>');
+  console.error('Usage: npm run new-bot -- <name> [--agent]');
+  console.error('  --agent  scaffold an LLM-connected agent (lib/agent-bot.mjs runtime)');
   process.exit(1);
 }
 const name = rawName.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/^-+|-+$/g, '');
@@ -40,7 +42,30 @@ if (fs.existsSync(filePath)) {
 const { sk, pk, npub, nsec } = newIdentity();
 
 const ENV = name.toUpperCase().replace(/-/g, '_');
-const template = `#!/usr/bin/env node
+
+const agentTemplate = `#!/usr/bin/env node
+// ${name} — Obelisk **agent**: an LLM-connected bot that only listens to
+// whitelisted users. All behavior lives in lib/agent-bot.mjs; this file is
+// just the entry point. Configure via env (see docs/agents.md):
+//
+//   ${ENV}_NSEC              identity (already generated)
+//   ${ENV}_GROUPS            wss://relay|groupId,…
+//   ${ENV}_ALLOWED_PUBKEYS   npubs allowed to talk to it (comma-separated)
+//   ${ENV}_SYSTEM_PROMPT     persona / instructions
+//   ${ENV}_LLM_API_KEY       + ${ENV}_LLM_PROVIDER (anthropic | openai),
+//                            or global ANTHROPIC_API_KEY / OPENAI_API_KEY
+//
+// Pubkey:  ${pk}
+// npub:    ${npub}
+import { runAgent } from '../lib/agent-bot.mjs';
+
+runAgent({ name: '${name}', envPrefix: '${ENV}' });
+
+process.on('SIGINT', () => process.exit(0));
+process.on('SIGTERM', () => process.exit(0));
+`;
+
+const template = isAgent ? agentTemplate : `#!/usr/bin/env node
 // ${name} — Obelisk bot scaffold.
 // Identity:  ${ENV}_NSEC  (or BOT_NSEC if you only run one bot)
 // Pubkey:    ${pk}

@@ -30,7 +30,8 @@ export function BotDetail({ name }: { name: string; path?: string }) {
 
   return (
     <div class="animate-fade-in-up">
-      <div class="flex items-center gap-3 mb-6 flex-wrap">
+      <a href="/" class="text-xs text-lc-muted hover:text-lc-green transition-colors">← fleet</a>
+      <div class="flex items-center gap-3 mb-6 mt-2 flex-wrap">
         <StatusDot status={bot.status} />
         <h1 class="text-2xl font-extrabold">{bot.name}</h1>
         <span class="text-sm text-lc-muted">
@@ -223,7 +224,14 @@ function LogsSection({ name }: { name: string }) {
       }
     >
       <div ref={boxRef} class="lc-console h-80">
-        {(logs[tab].length ? logs[tab] : ['(empty)']).join('\n')}
+        {(logs[tab].length ? logs[tab] : ['(empty)']).map((line, i) => (
+          <div key={i} class={
+            /error|exception|fatal|ECONN|refused/i.test(line) ? 'lc-log-err'
+              : /warn/i.test(line) ? 'lc-log-warn'
+              : /EOSE|running as|listening/.test(line) ? undefined
+              : undefined
+          }>{line}</div>
+        ))}
       </div>
     </Section>
   )

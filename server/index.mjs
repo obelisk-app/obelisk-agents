@@ -14,7 +14,7 @@ import { PORT, repoRoot, distDir } from './config.mjs';
 import { issueChallenge, login, logout, sessionFor, sessionCookie } from './auth.mjs';
 import { readEnvEntries, applyEnvChanges } from './envfile.mjs';
 import { botAction, botLogs } from './pm2.mjs';
-import { botsOverview, scaffoldBot, publishProfile, listGroups } from './bots.mjs';
+import { botsOverview, scaffoldBot, buildPrompt, publishProfile, listGroups } from './bots.mjs';
 import * as agent from './agent.mjs';
 
 const routes = [];
@@ -51,8 +51,29 @@ route('POST', /^\/api\/auth\/logout$/, (req, res) => {
 // ── Bots ────────────────────────────────────────────────────────────────
 route('GET', /^\/api\/bots$/, async (req, res) => json(res, 200, await botsOverview()));
 
-route('POST', /^\/api\/bots$/, async (req, res, m, body) =>
-  json(res, 200, await scaffoldBot(body?.name)));
+// Scaffold a bot; with build:true (and Codex connected) the Operator
+// immediately gets a run that implements the described behavior.
+route('POST', /^\/api\/bots$/, async (req, res, m, body) => {
+  const created = await scaffoldBot(body?.name, {
+    relays: Array.isArray(body?.relays) ? body.relays : [],
+    groups: Array.isArray(body?.groups) ? body.groups : [],
+    kind: body?.kind === 'agent' ? 'agent' : 'bot',
+    allowedPubkeys: Array.isArray(body?.allowedPubkeys) ? body.allowedPubkeys : [],
+    systemPrompt: String(body?.systemPrompt ?? ''),
+  });
+  let runId = null;
+  if (body?.build) {
+    const status = await agent.agentStatus();
+    if (status.mode === 'none') throw new Error(`scaffolded ${created.name}, but Codex is not connected — build skipped`);
+    runId = agent.startRun(buildPrompt({
+      ...created,
+      description: String(body?.description ?? ''),
+      relays: body?.relays,
+      groups: body?.groups,
+    })).id;
+  }
+  json(res, 200, { ...created, runId });
+});
 
 route('POST', /^\/api\/bots\/([\w-]+)\/(start|stop|restart)$/, async (req, res, m) => {
   await botAction(m[1], m[2]);

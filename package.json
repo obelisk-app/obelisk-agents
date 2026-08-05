@@ -1,8 +1,8 @@
 {
-  "name": "obelisk-bots",
+  "name": "obelisk-agents",
   "version": "0.1.0",
   "private": true,
-  "description": "Nostr bots for the Obelisk ecosystem (NIP-29 groups). Each bot is a single Node script with its own nsec; PM2 keeps them running.",
+  "description": "Nostr bots and LLM agents for the Obelisk ecosystem (NIP-29 groups). Each bot is a single Node script with its own nsec; PM2 keeps them running.",
   "type": "module",
   "license": "MIT",
   "engines": {
@@ -26,6 +26,7 @@
     "pm2:logs": "pm2 logs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.115.0",
     "nostr-tools": "^2.7.2",
     "ws": "^8.18.0"
   }

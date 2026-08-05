@@ -11,7 +11,7 @@ import { ecosystemPath } from './config.mjs';
 const execFileP = promisify(execFile);
 const require = createRequire(import.meta.url);
 
-const MANAGER_APP = 'obelisk-bots-manager';
+const MANAGER_APP = 'obelisk-agents-manager';
 
 export function ecosystemApps() {
   delete require.cache[require.resolve(ecosystemPath)];
@@ -34,12 +34,19 @@ async function pm2Json() {
   return JSON.parse(jsonLine);
 }
 
+function lastLogLine(file) {
+  if (!file) return null;
+  const lines = tailFile(file, 4 * 1024).split('\n').filter((l) => l.trim());
+  return lines.at(-1) ?? null;
+}
+
 export async function listBots() {
   const procs = await pm2Json().catch(() => []);
   const byName = new Map(procs.map((p) => [p.name, p]));
   return ecosystemApps().map((app) => {
     const p = byName.get(app.name);
     return {
+      lastLog: lastLogLine(p?.pm2_env?.pm_out_log_path),
       name: app.name,
       script: app.script,
       status: p?.pm2_env?.status ?? 'not started',

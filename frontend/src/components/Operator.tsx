@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
+import { marked } from 'marked'
 import { api, AgentStatus, RunMeta } from '../api'
 import { Flash, Section, timeAgo } from './ui'
 
@@ -166,7 +167,15 @@ function RunPanel({ onError }: { onError: (e: string) => void }) {
   const boxRef = useRef<HTMLDivElement>(null)
 
   const refreshRuns = () => api.runs().then(setRuns).catch(() => {})
-  useEffect(() => { refreshRuns() }, [])
+  useEffect(() => {
+    refreshRuns()
+    // Deep link from the new-bot wizard: /operator?run=<id>
+    const id = new URLSearchParams(window.location.search).get('run')
+    if (id) {
+      setRunning(true)
+      watch(id)
+    }
+  }, [])
   useEffect(() => {
     if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight
   }, [events])
@@ -205,6 +214,12 @@ function RunPanel({ onError }: { onError: (e: string) => void }) {
     }
   }
 
+  const SUGGESTIONS = [
+    'Audit every bot\'s logs for errors in the last hours and summarize what needs attention.',
+    'Review bots/zap-bot.mjs for reconnect / duplicate-message bugs and fix what you find.',
+    'Update all bot profiles (kind 0) so their about fields describe their commands.',
+  ]
+
   return (
     <>
       <Section title="Run a task">
@@ -215,6 +230,15 @@ function RunPanel({ onError }: { onError: (e: string) => void }) {
             value={prompt}
             onInput={(e) => setPrompt((e.target as HTMLTextAreaElement).value)}
           />
+          <div class="flex gap-1.5 mt-2 flex-wrap">
+            {SUGGESTIONS.map((s) => (
+              <button type="button" key={s}
+                class="text-[11px] text-lc-muted border border-lc-border rounded-full px-2.5 py-1 hover:border-lc-green hover:text-lc-green transition-colors"
+                onClick={() => setPrompt(s)}>
+                {s.slice(0, 52)}…
+              </button>
+            ))}
+          </div>
           <div class="flex gap-2 mt-3">
             <button class="lc-pill-primary text-sm" disabled={running || !prompt.trim()}>
               {running ? <span class="lc-spinner" /> : 'Run with Codex'}
@@ -270,19 +294,21 @@ function EventLine({ event }: { event: RunEvent }) {
 
   if (event.type === 'item.completed' && item) {
     if (item.type === 'agent_message') {
-      return <div class="text-lc-white whitespace-pre-wrap mb-2">{item.text}</div>
+      return (
+        <div class="lc-md !text-[13px] bg-lc-card border border-lc-border rounded-lg px-3 py-2 mb-2"
+          dangerouslySetInnerHTML={{ __html: marked.parse(item.text ?? '') as string }} />
+      )
     }
     if (item.type === 'reasoning') {
       return <div class="text-lc-muted/70 italic mb-1">{item.text}</div>
     }
     if (item.type === 'command_execution') {
+      const out = item.aggregated_output?.trim()
       return (
-        <div class="mb-2">
-          <div class="text-lc-green">$ {item.command}</div>
-          {item.aggregated_output && (
-            <div class="text-lc-muted">{item.aggregated_output.slice(0, 2000)}</div>
-          )}
-        </div>
+        <details class="mb-2">
+          <summary class="text-lc-green cursor-pointer select-none">$ {item.command}</summary>
+          {out && <div class="text-lc-muted pl-4 border-l border-lc-border ml-1 mt-1">{out.slice(0, 3000)}</div>}
+        </details>
       )
     }
   }

@@ -22,4 +22,4 @@ Non-negotiables (details in the docs above):
   bots/<name>.mjs`) before touching PM2.
 - The management web UI lives in `server/` (Node, no framework) and
   `frontend/` (Preact + Vite + Tailwind); it is deployed as the
-  `obelisk-bots-manager` PM2 app on port 3021 → https://bots.obelisk.ar.
+  `obelisk-agents-manager` PM2 app on port 3021 → https://bots.obelisk.ar.

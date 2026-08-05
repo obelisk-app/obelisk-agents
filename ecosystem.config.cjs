@@ -13,10 +13,10 @@
 
 const cwd = __dirname;
 const nodeArgs = `--env-file-if-exists=${cwd}/.env.local`;
-const stateDir = '/var/lib/obelisk-bots/state';
+const stateDir = '/var/lib/obelisk-agents/state';
 const baseEnv = {
   NODE_ENV: 'production',
-  OBELISK_BOTS_STATE_DIR: stateDir,
+  OBELISK_AGENTS_STATE_DIR: stateDir,
 };
 
 module.exports = {
@@ -51,12 +51,22 @@ module.exports = {
       max_restarts: 10,
       env: baseEnv,
     },
+    {
+      name: 'obelisk-este-sech',
+      script: 'bots/este-sech.mjs',
+      cwd,
+      node_args: nodeArgs,
+      watch: false,
+      autorestart: true,
+      max_restarts: 10,
+      env: baseEnv,
+    },
     // ── Add additional bots here ──
 
     // Management web UI + API (bots.obelisk.ar). Not a bot: it is the
     // control plane for everything above.
     {
-      name: 'obelisk-bots-manager',
+      name: 'obelisk-agents-manager',
       script: 'server/index.mjs',
       cwd,
       node_args: nodeArgs,

@@ -166,6 +166,61 @@ body {
 .lc-md th { background: #171717; }
 .lc-md blockquote { border-left: 3px solid #b4f953; padding-left: 12px; color: #a3a3a3; margin: 0.8em 0; }
 
+/* ── Toasts ── */
+.lc-toast {
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  animation: toast-in 0.25s ease-out both;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.lc-toast-ok { background: rgba(30,40,18,0.92); border: 1px solid #2d3a1a; color: #b4f953; }
+.lc-toast-err { background: rgba(69,10,10,0.92); border: 1px solid #7f1d1d; color: #fca5a5; }
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Monogram avatar ── */
+.lc-monogram {
+  width: 38px; height: 38px; border-radius: 12px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 14px; color: #0a0a0a;
+  background: linear-gradient(135deg, #b4f953, #5a8f1f);
+}
+.lc-monogram-off { background: linear-gradient(135deg, #3a3a3a, #262626); color: #a3a3a3; }
+
+/* ── Segmented control ── */
+.lc-seg { display: flex; background: #0a0a0a; border: 1px solid #262626; border-radius: 9999px; padding: 3px; gap: 2px; }
+.lc-seg button {
+  flex: 1; border-radius: 9999px; padding: 6px 10px; font-size: 12px; font-weight: 600;
+  color: #a3a3a3; transition: all 0.15s ease; white-space: nowrap;
+}
+.lc-seg button.active { background: #2d3a1a; color: #b4f953; }
+.lc-seg button:not(.active):hover { color: #fafafa; }
+
+/* ── Log line colors ── */
+.lc-log-err { color: #fca5a5; }
+.lc-log-warn { color: #fbbf24; }
+.lc-log-dim { color: #737373; }
+
+/* ── Modal ── */
+.lc-modal-backdrop {
+  position: fixed; inset: 0; z-index: 40;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(3px);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 8vh 16px 16px; overflow-y: auto;
+}
+.lc-modal { animation: fade-in-up 0.3s ease-out both; width: 100%; max-width: 640px; }
+
+/* ── Focus ring ── */
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible {
+  outline: 2px solid rgba(180,249,83,0.55);
+  outline-offset: 1px;
+}
+
 /* ── Animations ── */
 @keyframes lc-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 @keyframes glow-pulse {

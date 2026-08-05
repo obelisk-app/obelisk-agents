@@ -1,4 +1,4 @@
-# AGENT.md — Obelisk Bots
+# AGENT.md — Obelisk Agents
 
 Cheat sheet for coding terminal agents (Claude Code, Codex, Cursor, …)
 that need to create, configure, run, or manage bots in this repo.
@@ -126,7 +126,7 @@ pm2 monit                              # live process monitor (interactive)
 
 Bots store join/greeted state under the repo-local `state/` directory by
 default, for example `state/obelisk-price-bot-state.json`. Set
-`OBELISK_BOTS_STATE_DIR` or a per-bot `*_STATE_PATH` override to move it.
+`OBELISK_AGENTS_STATE_DIR` or a per-bot `*_STATE_PATH` override to move it.
 Delete the relevant state file if you want a clean re-greet (then expect
 one hello per group on next start).
 

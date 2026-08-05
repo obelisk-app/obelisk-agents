@@ -20,7 +20,7 @@ export function Layout({ npub, path, onLogout, children }: {
       <header class="border-b border-lc-border bg-lc-black/80 backdrop-blur sticky top-0 z-20">
         <div class="max-w-6xl mx-auto px-4 h-14 flex items-center gap-6">
           <a href="/" class="font-extrabold whitespace-nowrap">
-            🤖 Obelisk <span class="text-lc-green">Bots</span>
+            ⛩ Obelisk <span class="text-lc-green">Agents</span>
           </a>
           <nav class="flex gap-1 flex-1">
             {NAV.map((item) => (

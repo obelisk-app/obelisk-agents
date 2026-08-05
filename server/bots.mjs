@@ -7,7 +7,7 @@ import path from 'node:path';
 import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 import { getPublicKey, nip19 } from 'nostr-tools';
-import { repoRoot, envLocalPath } from './config.mjs';
+import { repoRoot, envLocalPath, adminPubkeys } from './config.mjs';
 import { parseSecret } from '../lib/secret.mjs';
 import { readEnvMap, readEnvEntries, applyEnvChanges } from './envfile.mjs';
 import { listBots, ecosystemApps } from './pm2.mjs';
@@ -47,6 +47,15 @@ function identityFor(nsecEnv, env) {
   }
 }
 
+function botKind(scriptPath) {
+  try {
+    const src = fs.readFileSync(path.join(repoRoot, scriptPath), 'utf8');
+    return src.includes('lib/agent-bot.mjs') ? 'agent' : 'bot';
+  } catch {
+    return 'bot';
+  }
+}
+
 export async function botsOverview() {
   const env = readEnvMap();
   const entries = readEnvEntries();
@@ -57,6 +66,7 @@ export async function botsOverview() {
     const vars = scriptEnvVars(app.script);
     return {
       ...proc,
+      kind: botKind(app.script),
       nsecEnv,
       ...identityFor(nsecEnv, env),
       envVars: vars.map((key) => entries.find((e) => e.key === key)
@@ -67,17 +77,76 @@ export async function botsOverview() {
 
 // ── Scaffold ────────────────────────────────────────────────────────────
 // Runs tools/new-bot.mjs, captures the generated nsec, writes it straight
-// into .env.local (never returned to the client) and registers a PM2 entry.
-export async function scaffoldBot(rawName) {
+// into .env.local (never returned to the client) along with the bot's
+// relay/group lists, and registers a PM2 entry.
+export async function scaffoldBot(rawName, {
+  relays = [], groups = [], kind = 'bot', allowedPubkeys = [], systemPrompt = '',
+} = {}) {
   const name = String(rawName ?? '').toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/^-+|-+$/g, '');
   if (!name) throw new Error('invalid bot name');
-  const { stdout } = await execFileP('node', ['tools/new-bot.mjs', name], { cwd: repoRoot });
+  const args = ['tools/new-bot.mjs', name];
+  if (kind === 'agent') args.push('--agent');
+  const { stdout } = await execFileP('node', args, { cwd: repoRoot });
   const nsec = stdout.match(/nsec1[0-9a-z]+/)?.[0];
   const npub = stdout.match(/npub1[0-9a-z]+/)?.[0];
-  const envName = `${name.toUpperCase().replace(/-/g, '_')}_NSEC`;
-  if (nsec) applyEnvChanges({ set: { [envName]: nsec } });
+  const prefix = name.toUpperCase().replace(/-/g, '_');
+  const set = {};
+  if (nsec) set[`${prefix}_NSEC`] = nsec;
+  if (relays.length) set[`${prefix}_RELAYS`] = relays.map(String).join(',');
+  if (groups.length) set[`${prefix}_GROUPS`] = groups.map(String).join(',');
+  if (kind === 'agent') {
+    // Whitelist is the agent's security boundary — default to the manager
+    // admins so a fresh agent hears its operator and nobody else.
+    const allow = allowedPubkeys.length
+      ? allowedPubkeys.map(String)
+      : [...adminPubkeys].map((pk) => nip19.npubEncode(pk));
+    set[`${prefix}_ALLOWED_PUBKEYS`] = allow.join(',');
+    if (systemPrompt) set[`${prefix}_SYSTEM_PROMPT`] = systemPrompt.replace(/\s*\n\s*/g, ' ');
+  }
+  if (Object.keys(set).length) applyEnvChanges({ set });
   addEcosystemEntry(name);
-  return { name, npub, nsecEnv: envName, script: `bots/${name}.mjs` };
+  return { name, npub, nsecEnv: `${prefix}_NSEC`, prefix, kind, script: `bots/${name}.mjs` };
+}
+
+// Prompt handed to the Operator (Codex) right after scaffolding, so the
+// agent implements the bot's actual behavior — data sources / scraping,
+// chat interactions, intervals — against the configured relays/groups.
+export function buildPrompt({ name, prefix, description, relays, groups, kind = 'bot' }) {
+  if (kind === 'agent') {
+    return [
+      `A new Obelisk AGENT (LLM-connected bot) named ${name} was just scaffolded on the lib/agent-bot.mjs runtime.`,
+      `Its entry point bots/${name}.mjs already works; env (identity, groups, whitelist, system prompt) is in .env.local.`,
+      ``,
+      `What the admin wants this agent to do:`,
+      `"""`,
+      description || '(no description — leave the default behavior)',
+      `"""`,
+      ``,
+      `Read docs/agents.md and lib/agent-bot.mjs first. If the description fits the stock runtime, only refine ${prefix}_SYSTEM_PROMPT in .env.local (never print ${prefix}_NSEC or any *_LLM_API_KEY). If it needs extra behaviors (commands, scraping, scheduled posts), extend bots/${name}.mjs alongside runAgent() reusing lib/ helpers. Validate with node --check, foreground-test briefly, then pm2 restart obelisk-${name}. Do not touch other bots. Do not commit.`,
+    ].join('\n');
+  }
+  return [
+    `A new Obelisk bot was just scaffolded and is waiting to be implemented.`,
+    ``,
+    `Bot file: bots/${name}.mjs (PM2 app "obelisk-${name}").`,
+    `Identity: env var ${prefix}_NSEC — already in .env.local. NEVER print or move it.`,
+    relays?.length ? `Relays (${prefix}_RELAYS, already set): ${relays.join(', ')}` : `Relays: ${prefix}_RELAYS not set — default is wss://relay.obelisk.ar.`,
+    groups?.length ? `Groups (${prefix}_GROUPS, already set): ${groups.join(', ')}` : `Groups: ${prefix}_GROUPS not set yet.`,
+    ``,
+    `What the admin wants this bot to do:`,
+    `"""`,
+    description || '(no description given — keep the scaffold behavior but clean it up)',
+    `"""`,
+    ``,
+    `Follow AGENTS.md and docs/building-bots.md strictly. In particular:`,
+    `- reuse lib/secret.mjs, lib/pool.mjs, lib/state.mjs (and lib/group-watcher.mjs for dynamic groups)`,
+    `- read config only via process.env.${prefix}_* with BOT_* fallbacks so the manager UI picks the settings up`,
+    `- external data (scraping / HTTP APIs): plain fetch with a sane interval, timeout and backoff — no new dependencies`,
+    `- one filter per subscription; track seen event ids; ignore the bot's own events`,
+    `- validate with node --check, then a short foreground test run (e.g. timeout 30s node --env-file-if-exists=.env.local bots/${name}.mjs) and confirm it prints "running as npub"`,
+    `- when it works: pm2 restart obelisk-${name}`,
+    `Do not touch other bots. Do not commit.`,
+  ].join('\n');
 }
 
 function addEcosystemEntry(name) {

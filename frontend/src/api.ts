@@ -9,6 +9,7 @@ export interface EnvEntry {
 
 export interface Bot {
   name: string
+  kind: 'bot' | 'agent'
   script: string
   status: string
   pid: number | null
@@ -19,6 +20,7 @@ export interface Bot {
   nsecEnv: string
   npub: string | null
   envVars: EnvEntry[]
+  lastLog: string | null
 }
 
 export interface AgentStatus {
@@ -59,8 +61,20 @@ export const api = {
   logout: () => req<{ ok: boolean }>('/api/auth/logout', { method: 'POST' }),
 
   bots: () => req<Bot[]>('/api/bots'),
-  scaffold: (name: string) =>
-    req<{ name: string; npub: string }>('/api/bots', { method: 'POST', body: JSON.stringify({ name }) }),
+  scaffold: (opts: {
+    name: string
+    kind?: 'bot' | 'agent'
+    description?: string
+    relays?: string[]
+    groups?: string[]
+    allowedPubkeys?: string[]
+    systemPrompt?: string
+    build?: boolean
+  }) =>
+    req<{ name: string; npub: string; runId: string | null }>('/api/bots', {
+      method: 'POST',
+      body: JSON.stringify(opts),
+    }),
   botAction: (name: string, action: 'start' | 'stop' | 'restart') =>
     req<{ ok: boolean }>(`/api/bots/${name}/${action}`, { method: 'POST' }),
   botLogs: (name: string, lines = 200) =>

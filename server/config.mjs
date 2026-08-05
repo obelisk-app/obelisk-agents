@@ -22,7 +22,9 @@ export const adminPubkeys = new Set(
 );
 
 export const stateDir = path.join(
-  process.env.OBELISK_BOTS_STATE_DIR || path.join(repoRoot, 'state'),
+  process.env.OBELISK_AGENTS_STATE_DIR
+    || process.env.OBELISK_BOTS_STATE_DIR // pre-rename compat
+    || path.join(repoRoot, 'state'),
   'manager',
 );
 

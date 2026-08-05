@@ -1,13 +1,15 @@
-# Obelisk Bots
+# Obelisk Agents
 
 Nostr bots for the Obelisk ecosystem (NIP-29 groups). Each bot is a small
 Node process that holds its own `nsec`, talks directly to relays, and
-publishes events. There is **no backend** — bots are plain Nostr clients
-supervised by PM2.
+publishes events. Two types exist: **bots** (scripted — tickers, announcers)
+and **agents** (LLM-connected members that only hear whitelisted users; see
+[docs/agents.md](./docs/agents.md)). All are plain Nostr clients supervised
+by PM2, managed from https://bots.obelisk.ar.
 
 <p>
-  <a href="https://github.com/obelisk-app/obelisk-bots/stargazers"><img src="https://img.shields.io/github/stars/obelisk-app/obelisk-bots?style=flat&logo=github&color=b4f953&labelColor=0a0a0a" alt="GitHub stars" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/obelisk-app/obelisk-bots?style=flat&color=b4f953&labelColor=0a0a0a" alt="License" /></a>
+  <a href="https://github.com/obelisk-app/obelisk-agents/stargazers"><img src="https://img.shields.io/github/stars/obelisk-app/obelisk-agents?style=flat&logo=github&color=b4f953&labelColor=0a0a0a" alt="GitHub stars" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/obelisk-app/obelisk-agents?style=flat&color=b4f953&labelColor=0a0a0a" alt="License" /></a>
 </p>
 
 ## The Obelisk family
@@ -17,7 +19,7 @@ supervised by PM2.
 | [obelisk-app/obelisk](https://github.com/obelisk-app/obelisk) | The chat app (relay-only) |
 | [obelisk-app/obelisk-relay](https://github.com/obelisk-app/obelisk-relay) | NIP-29 groups relay |
 | [obelisk-app/obelisk-sfu](https://github.com/obelisk-app/obelisk-sfu) | mediasoup SFU for voice |
-| [**obelisk-app/obelisk-bots**](https://github.com/obelisk-app/obelisk-bots) | This repo — bots toolkit |
+| [**obelisk-app/obelisk-agents**](https://github.com/obelisk-app/obelisk-agents) | This repo — bots toolkit |
 | [obelisk-app/obelisk-classic](https://github.com/obelisk-app/obelisk-classic) | The original centralized stack |
 
 ## What's in here
@@ -28,6 +30,7 @@ bots/                 one .mjs file per long-running bot
   price-bot.cleanup.mjs   one-shot cleanup of duplicate startup hellos
   sat-ars-bot.mjs         sat/ARS ticker (yadio.io; replies to !sat / !btc / !ars / ...)
   zap-bot.mjs             [WIP] announces zap receipts/reactions with dynamic group discovery
+  (agents)                LLM-connected bots scaffolded with new-bot --agent (lib/agent-bot.mjs)
 tools/                management utilities you run by hand or from a coding agent
   new-bot.mjs             scaffold a new bot + generate its nsec
   whoami.mjs              decode an nsec env var → npub
@@ -75,8 +78,8 @@ then open http://127.0.0.1:3021.
 ## Install
 
 ```bash
-git clone https://github.com/obelisk-app/obelisk-bots.git
-cd obelisk-bots
+git clone https://github.com/obelisk-app/obelisk-agents.git
+cd obelisk-agents
 npm install
 cp .env.example .env.local   # then fill in BOT_NSEC etc.
 ```
@@ -172,6 +175,9 @@ admin adds it to a group it's also a member bot).
 
 - [AGENT.md](./AGENT.md) — cheat sheet for coding terminal agents (Claude
   Code, Codex, Cursor) to drive this repo.
+- [docs/building-bots.md](./docs/building-bots.md) — build a new bot end to
+  end (agent-oriented, incl. the Nostr/NIP-29 communication guide).
+- [docs/agents.md](./docs/agents.md) — the LLM-connected agent type.
 - [docs/managing-bots.md](./docs/managing-bots.md) — full guide to
   creating, configuring, and managing bots from the CLI.
 - [docs/price-bot.md](./docs/price-bot.md) — BTC/USD bot operational guide.
