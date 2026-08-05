@@ -211,7 +211,8 @@ outside git.
 | restart after config change | `pm2 restart obelisk-<name>` |
 | change relays/groups/settings | edit `.env.local`, restart the bot (or use the manager UI) |
 | read logs | `pm2 logs obelisk-<name> --lines 50` |
-| change display name / avatar | `npm run set-profile -- --nsec-env=<NAME>_NSEC` (env or stdin JSON) |
+| change display name / about | `npm run set-profile -- --nsec-env=<NAME>_NSEC` (env or stdin JSON) |
+| upload an avatar picture | manager UI → bot → Profile → Upload: the server signs a Blossom upload (kind 24242) with the bot key and publishes the merged kind 0 |
 | find a group id | `npm run list-groups -- wss://relay.obelisk.ar "name"` |
 | check what a relay stored | `tools/show-profile.mjs`, `tools/inspect-events.mjs` |
 | test a zap end-to-end | `tools/simulate-zap.mjs` |

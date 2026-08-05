@@ -89,6 +89,19 @@ export const api = {
       body: JSON.stringify({ set, unset }),
     }),
 
+  // Raw image body — the manager signs a Blossom upload with the bot's key
+  // and publishes the merged kind 0.
+  uploadAvatar: async (name: string, file: File) => {
+    const res = await fetch(`/api/bots/${name}/avatar`, {
+      method: 'POST',
+      headers: { 'Content-Type': file.type || 'application/octet-stream' },
+      body: file,
+    })
+    const body = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`)
+    return body as { url: string; output: string }
+  },
+
   groups: (relay: string) =>
     req<{ id: string; access: string; name: string }[]>(`/api/groups?relay=${encodeURIComponent(relay)}`),
 

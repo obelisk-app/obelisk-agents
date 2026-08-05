@@ -196,6 +196,49 @@ function ecosystemAppOrThrow(name) {
   return app;
 }
 
+// ── Avatar upload: frontend → manager → bot-signed Blossom upload →
+// merged kind 0 published to relays ──────────────────────────────────────
+function botSecret(name) {
+  const app = ecosystemAppOrThrow(name);
+  const env = readEnvMap();
+  const nsecEnv = nsecEnvFor(app, env);
+  const raw = env[nsecEnv];
+  if (!raw) throw new Error(`${nsecEnv} is not set in .env.local`);
+  const sk = parseSecret(raw);
+  return { sk, pk: getPublicKey(sk), nsecEnv };
+}
+
+const PROFILE_RELAYS = ['wss://relay.obelisk.ar', 'wss://relay.damus.io', 'wss://purplepag.es', 'wss://relay.nostr.band'];
+
+async function fetchProfile(name) {
+  const { sk, pk } = botSecret(name);
+  const { createPool } = await import('../lib/pool.mjs');
+  const pool = createPool(sk);
+  try {
+    const ev = await Promise.race([
+      pool.get(PROFILE_RELAYS, { kinds: [0], authors: [pk] }),
+      new Promise((resolve) => setTimeout(() => resolve(null), 6000)),
+    ]);
+    return ev ? JSON.parse(ev.content) : {};
+  } catch {
+    return {};
+  } finally {
+    pool.close(PROFILE_RELAYS);
+  }
+}
+
+export async function setAvatar(name, buffer, mime) {
+  if (!/^image\//.test(mime)) throw new Error('expected an image upload');
+  const { sk } = botSecret(name);
+  const { uploadToBlossom } = await import('./media.mjs');
+  const { url } = await uploadToBlossom(sk, buffer, mime);
+  // kind 0 is replaceable — merge with the current profile so setting the
+  // picture never blanks the name/about.
+  const existing = await fetchProfile(name);
+  const { output } = await publishProfile(name, { ...existing, picture: url });
+  return { url, output };
+}
+
 // ── Groups on a relay ───────────────────────────────────────────────────
 export async function listGroups(relay) {
   if (!/^wss?:\/\//.test(relay)) throw new Error('relay must be a ws:// or wss:// URL');

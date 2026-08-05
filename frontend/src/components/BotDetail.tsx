@@ -132,6 +132,25 @@ function ProfileSection({ bot, onDone, onError }: {
 }) {
   const [p, setP] = useState({ name: '', display_name: '', about: '', picture: '' })
   const [busy, setBusy] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  // Picture flow: browser → manager → Blossom upload signed with the BOT's
+  // key → merged kind 0 published to relays. One click, live everywhere.
+  const uploadPicture = async (file: File) => {
+    setUploading(true)
+    onError('')
+    try {
+      const { url } = await api.uploadAvatar(bot.name, file)
+      setP((prev) => ({ ...prev, picture: url }))
+      onDone(`Picture uploaded and profile published — ${url}`)
+    } catch (err) {
+      onError((err as Error).message)
+    } finally {
+      setUploading(false)
+      if (fileRef.current) fileRef.current.value = ''
+    }
+  }
 
   const publish = async (e: Event) => {
     e.preventDefault()
@@ -169,8 +188,34 @@ function ProfileSection({ bot, onDone, onError }: {
       <form class="grid gap-3 md:grid-cols-2" onSubmit={publish}>
         {field('name', 'Name', 'price-bot')}
         {field('display_name', 'Display name', 'BTC $109,431')}
-        {field('picture', 'Picture URL', 'https://…/avatar.png')}
+        <div class="block">
+          <span class="text-xs text-lc-muted block mb-1">Picture</span>
+          <div class="flex gap-2">
+            <input
+              class="lc-input"
+              placeholder="https://…/avatar.png — or upload →"
+              value={p.picture}
+              onInput={(e) => setP((prev) => ({ ...prev, picture: (e.target as HTMLInputElement).value }))}
+            />
+            <button type="button" class="lc-pill-secondary text-xs whitespace-nowrap" disabled={uploading}
+              onClick={() => fileRef.current?.click()}>
+              {uploading ? <span class="lc-spinner" /> : '⬆ Upload'}
+            </button>
+            <input ref={fileRef} type="file" accept="image/*" class="hidden"
+              onChange={(e) => {
+                const file = (e.target as HTMLInputElement).files?.[0]
+                if (file) uploadPicture(file)
+              }} />
+          </div>
+          <span class="text-[11px] text-lc-muted/70 block mt-1">
+            Uploads to Blossom signed with the bot's key, then publishes the profile instantly.
+          </span>
+        </div>
         {field('about', 'About', 'What this bot does')}
+        {p.picture && (
+          <img src={p.picture} alt="avatar preview"
+            class="w-16 h-16 rounded-xl object-cover border border-lc-border md:col-span-2" />
+        )}
         <div class="md:col-span-2">
           <button class="lc-pill-primary text-sm" disabled={busy}>
             {busy ? <span class="lc-spinner" /> : 'Publish profile'}

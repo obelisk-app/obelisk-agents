@@ -14,12 +14,12 @@ import { PORT, repoRoot, distDir } from './config.mjs';
 import { issueChallenge, login, logout, sessionFor, sessionCookie } from './auth.mjs';
 import { readEnvEntries, applyEnvChanges } from './envfile.mjs';
 import { botAction, botLogs } from './pm2.mjs';
-import { botsOverview, scaffoldBot, buildPrompt, publishProfile, listGroups } from './bots.mjs';
+import { botsOverview, scaffoldBot, buildPrompt, publishProfile, listGroups, setAvatar } from './bots.mjs';
 import * as agent from './agent.mjs';
 
 const routes = [];
-const route = (method, pattern, handler, { open = false } = {}) =>
-  routes.push({ method, pattern, handler, open });
+const route = (method, pattern, handler, { open = false, raw = false } = {}) =>
+  routes.push({ method, pattern, handler, open, raw });
 
 const json = (res, code, body) => {
   res.writeHead(code, { 'Content-Type': 'application/json' });
@@ -85,6 +85,12 @@ route('GET', /^\/api\/bots\/([\w-]+)\/logs$/, async (req, res, m, body, url) =>
 
 route('POST', /^\/api\/bots\/([\w-]+)\/profile$/, async (req, res, m, body) =>
   json(res, 200, await publishProfile(m[1], body ?? {})));
+
+// Avatar flow: raw image body → bot-signed Blossom upload → merged kind 0
+// published to the profile relays.
+route('POST', /^\/api\/bots\/([\w-]+)\/avatar$/, async (req, res, m, body) =>
+  json(res, 200, await setAvatar(m[1], body, req.headers['content-type'] ?? 'application/octet-stream')),
+  { raw: true });
 
 // ── Settings (.env.local) ───────────────────────────────────────────────
 route('GET', /^\/api\/env$/, (req, res) => json(res, 200, readEnvEntries()));
@@ -165,6 +171,20 @@ function serveStatic(req, res, url) {
   fs.createReadStream(full).pipe(res);
 }
 
+function readRawBody(req, limit = 8 * 1024 * 1024) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let size = 0;
+    req.on('data', (c) => {
+      size += c.length;
+      if (size > limit) reject(new Error('upload too large (8MB max)'));
+      else chunks.push(c);
+    });
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
+}
+
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let buf = '';
@@ -195,7 +215,9 @@ const server = http.createServer(async (req, res) => {
           return json(res, 403, { error: 'cross-origin request rejected' });
         }
       }
-      const body = ['POST', 'PUT', 'PATCH'].includes(req.method) ? await readBody(req) : null;
+      const body = r.raw
+        ? await readRawBody(req)
+        : ['POST', 'PUT', 'PATCH'].includes(req.method) ? await readBody(req) : null;
       return await r.handler(req, res, m, body, url);
     }
     if (req.method === 'GET' && !url.pathname.startsWith('/api/')) {
