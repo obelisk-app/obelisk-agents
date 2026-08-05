@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
+import { route } from 'preact-router'
 import { api, Bot, EnvEntry } from '../api'
+import { toast } from './toast'
 import { Section as SettingsSection, metaFor, SECTION_TITLES } from '../settings-meta'
 import { SettingField } from './fields'
 import { CopyChip, Flash, Section, StatusDot, fmtUptime, shortNpub } from './ui'
@@ -48,7 +50,71 @@ export function BotDetail({ name }: { name: string; path?: string }) {
       <EnvSection bot={bot} onSaved={(msg) => { setFlash(msg); refresh() }} onError={setError} />
       <ProfileSection bot={bot} onDone={setFlash} onError={setError} />
       <LogsSection name={bot.name} />
+      <DangerZone bot={bot} />
     </div>
+  )
+}
+
+// ── Danger zone ─────────────────────────────────────────────────────────
+function DangerZone({ bot }: { bot: Bot }) {
+  const [open, setOpen] = useState(false)
+  const [typed, setTyped] = useState('')
+  const [busy, setBusy] = useState(false)
+  const short = bot.name.replace(/^obelisk-/, '')
+
+  const remove = async () => {
+    setBusy(true)
+    try {
+      await api.removeBot(bot.name)
+      toast.ok(`${short} removed. Its script went to the trash folder and its keys stay commented in .env.local — nothing is unrecoverable.`)
+      route('/')
+    } catch (e) {
+      toast.err((e as Error).message)
+      setBusy(false)
+    }
+  }
+
+  return (
+    <section class="rounded-xl border border-red-900/60 bg-red-950/20 p-5 mb-6">
+      <div class="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <h2 class="font-bold text-red-300">Danger zone</h2>
+          <p class="text-xs text-lc-muted mt-1 max-w-md">
+            Removing stops the bot, deregisters it from PM2 and the ecosystem, moves its script to
+            trash, and comments out its keys (the nsec is kept recoverable — losing it would be forever).
+          </p>
+        </div>
+        <button class="lc-pill-danger text-sm" onClick={() => setOpen(true)}>Remove this bot…</button>
+      </div>
+
+      {open && (
+        <div class="lc-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setOpen(false) }}>
+          <div class="lc-card lc-modal p-6 !max-w-md border !border-red-900">
+            <h3 class="font-bold text-red-300 mb-2">Remove {short}?</h3>
+            <p class="text-xs text-lc-muted mb-4">
+              It stops posting immediately and disappears from the fleet. Type{' '}
+              <code class="text-red-300">{short}</code> to confirm.
+            </p>
+            <input
+              class="lc-input font-mono text-sm mb-4"
+              placeholder={short}
+              value={typed}
+              onInput={(e) => setTyped((e.target as HTMLInputElement).value)}
+            />
+            <div class="flex justify-end gap-2">
+              <button class="lc-pill-secondary text-sm" onClick={() => setOpen(false)}>Cancel</button>
+              <button
+                class="lc-pill-danger text-sm"
+                disabled={busy || typed.trim() !== short}
+                onClick={remove}
+              >
+                {busy ? <span class="lc-spinner" /> : 'Remove forever'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
   )
 }
 

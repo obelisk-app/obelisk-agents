@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'preact/hooks'
 import { route } from 'preact-router'
-import { api, AgentStatus, Bot } from '../api'
+import { api, ActivityRun, AgentStatus, Bot, Script } from '../api'
 import { toast } from './toast'
-import { CopyChip, StatusDot, fmtMem, fmtUptime, shortNpub } from './ui'
+import { CopyChip, Section, StatusDot, fmtMem, fmtUptime, shortNpub, timeAgo } from './ui'
 
 export function Dashboard(_props: { path?: string }) {
   const [bots, setBots] = useState<Bot[] | null>(null)
@@ -61,8 +61,109 @@ export function Dashboard(_props: { path?: string }) {
         </div>
       )}
 
+      <ActivityFeed />
+      <ScriptsInventory />
+
       {wizard && <NewBotWizard onClose={() => setWizard(false)} onDone={refresh} />}
     </div>
+  )
+}
+
+// ── Operator activity: every command the AI ran, every file it touched ──
+function ActivityFeed() {
+  const [runs, setRuns] = useState<ActivityRun[] | null>(null)
+
+  useEffect(() => {
+    const tick = () => api.activity().then(setRuns).catch(() => {})
+    tick()
+    const t = setInterval(tick, 6000)
+    return () => clearInterval(t)
+  }, [])
+
+  if (!runs?.length) return null
+
+  return (
+    <div class="mt-8">
+      <Section title="Operator activity">
+        <p class="text-xs text-lc-muted mb-3">
+          What the AI actually did — every shell command and file change, per run. Live runs update as they work.
+        </p>
+        <div class="space-y-2">
+          {runs.map((run) => (
+            <details key={run.id} class="border border-lc-border rounded-lg overflow-hidden">
+              <summary class="flex items-center gap-3 px-3 py-2 cursor-pointer select-none hover:bg-lc-card text-sm">
+                <span class={`lc-dot ${run.status === 'running' ? 'lc-dot-online' : run.status === 'done' ? 'lc-dot-stopped' : 'lc-dot-errored'}`} />
+                <span class="flex-1 truncate">{run.prompt.split('\n')[0].slice(0, 90)}</span>
+                <span class="text-xs text-lc-muted whitespace-nowrap">
+                  {run.commands.length} cmd{run.commands.length === 1 ? '' : 's'}
+                  {run.files.length > 0 && ` · ${run.files.length} file${run.files.length === 1 ? '' : 's'}`}
+                  {' · '}{run.status === 'running' ? 'running now' : timeAgo(run.startedAt)}
+                </span>
+              </summary>
+              <div class="px-3 pb-3 pt-1 space-y-3">
+                {run.files.length > 0 && (
+                  <div class="flex flex-wrap gap-1.5">
+                    {run.files.map((f) => (
+                      <span key={f} class="text-[11px] font-mono bg-lc-olive-dark/60 text-lc-green rounded px-2 py-0.5">{f}</span>
+                    ))}
+                  </div>
+                )}
+                {run.commands.length > 0 && (
+                  <div class="lc-console max-h-72">
+                    {run.commands.map((c, i) => (
+                      <div key={i} class="mb-2">
+                        <div class={c.exitCode === 0 || c.exitCode == null ? 'text-lc-green' : 'lc-log-err'}>
+                          $ {c.command}{c.exitCode != null && c.exitCode !== 0 ? `   (exit ${c.exitCode})` : ''}
+                        </div>
+                        {c.output && <div class="text-lc-muted">{c.output}</div>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {run.lastMessage && (
+                  <div class="text-xs text-lc-muted border-l-2 border-lc-olive pl-2 whitespace-pre-wrap">{run.lastMessage}</div>
+                )}
+                {run.commands.length === 0 && run.files.length === 0 && !run.lastMessage && (
+                  <div class="text-xs text-lc-muted">nothing logged yet…</div>
+                )}
+              </div>
+            </details>
+          ))}
+        </div>
+      </Section>
+    </div>
+  )
+}
+
+// ── Workspace scripts: what's on disk, and what the AI added/changed ────
+function ScriptsInventory() {
+  const [scripts, setScripts] = useState<Script[] | null>(null)
+
+  useEffect(() => {
+    const tick = () => api.scripts().then(setScripts).catch(() => {})
+    tick()
+    const t = setInterval(tick, 10000)
+    return () => clearInterval(t)
+  }, [])
+
+  if (!scripts?.length) return null
+
+  return (
+    <Section title="Workspace scripts">
+      <p class="text-xs text-lc-muted mb-3">
+        Every script in the repo, newest first. <span class="text-lc-green">new</span>/<span class="text-yellow-400">modified</span> = not committed yet (usually the operator's work).
+      </p>
+      <div class="grid gap-1.5 sm:grid-cols-2">
+        {scripts.map((s) => (
+          <div key={s.file} class="flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-lc-card border border-lc-border">
+            <span class="font-mono flex-1 truncate" title={s.file}>{s.file}</span>
+            {s.git === 'new' && <span class="text-[10px] font-bold bg-lc-olive-dark text-lc-green rounded px-1.5 py-0.5">NEW</span>}
+            {s.git === 'modified' && <span class="text-[10px] font-bold bg-yellow-950 text-yellow-400 rounded px-1.5 py-0.5">MODIFIED</span>}
+            <span class="text-lc-muted whitespace-nowrap">{(s.size / 1024).toFixed(1)}kB · {timeAgo(s.mtime)}</span>
+          </div>
+        ))}
+      </div>
+    </Section>
   )
 }
 

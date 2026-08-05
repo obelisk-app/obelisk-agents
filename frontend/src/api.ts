@@ -77,6 +77,8 @@ export const api = {
     }),
   botAction: (name: string, action: 'start' | 'stop' | 'restart') =>
     req<{ ok: boolean }>(`/api/bots/${name}/${action}`, { method: 'POST' }),
+  removeBot: (name: string) =>
+    req<{ removed: string }>(`/api/bots/${name}`, { method: 'DELETE' }),
   botLogs: (name: string, lines = 200) =>
     req<{ out: string[]; err: string[] }>(`/api/bots/${name}/logs?lines=${lines}`),
   publishProfile: (name: string, profile: object) =>
@@ -114,6 +116,8 @@ export const api = {
   deviceAuthCancel: () => req<{ ok: boolean }>('/api/agent/device-auth', { method: 'DELETE' }),
 
   runs: () => req<RunMeta[]>('/api/agent/runs'),
+  activity: () => req<ActivityRun[]>('/api/agent/activity'),
+  scripts: () => req<Script[]>('/api/workspace/scripts'),
   startRun: (prompt: string) =>
     req<{ id: string }>('/api/agent/runs', { method: 'POST', body: JSON.stringify({ prompt }) }),
   killRun: (id: string) => req<{ ok: boolean }>(`/api/agent/runs/${id}/kill`, { method: 'POST' }),
@@ -131,4 +135,22 @@ export interface DeviceAuth {
   done?: boolean
   ok?: boolean | null
   output?: string
+}
+
+export interface ActivityRun {
+  id: string
+  prompt: string
+  status: 'running' | 'done' | 'failed'
+  startedAt: number
+  finishedAt: number | null
+  commands: { command: string; output: string; exitCode: number | null }[]
+  files: string[]
+  lastMessage: string | null
+}
+
+export interface Script {
+  file: string
+  size: number
+  mtime: number
+  git: 'new' | 'modified' | 'committed'
 }

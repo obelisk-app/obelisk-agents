@@ -75,6 +75,11 @@ route('POST', /^\/api\/bots$/, async (req, res, m, body) => {
   json(res, 200, { ...created, runId });
 });
 
+route('DELETE', /^\/api\/bots\/([\w-]+)$/, async (req, res, m) => {
+  const { removeBot } = await import('./bots.mjs');
+  json(res, 200, await removeBot(m[1]));
+});
+
 route('POST', /^\/api\/bots\/([\w-]+)\/(start|stop|restart)$/, async (req, res, m) => {
   await botAction(m[1], m[2]);
   json(res, 200, { ok: true });
@@ -116,6 +121,31 @@ route('DELETE', /^\/api\/agent\/device-auth$/, (req, res) => {
   json(res, 200, { ok: true });
 });
 route('GET', /^\/api\/agent\/runs$/, (req, res) => json(res, 200, agent.listRuns()));
+route('GET', /^\/api\/agent\/activity$/, (req, res) => json(res, 200, agent.activity()));
+
+// Script inventory: every bot file with size, mtime and git state, so
+// operator-created scripts are visible the moment they appear on disk.
+route('GET', /^\/api\/workspace\/scripts$/, async (req, res) => {
+  const { execFile } = await import('node:child_process');
+  const { promisify } = await import('node:util');
+  const status = await promisify(execFile)('git', ['status', '--porcelain', '--', 'bots', 'lib', 'tools'], { cwd: repoRoot })
+    .then(({ stdout }) => stdout).catch(() => '');
+  const gitState = new Map();
+  for (const line of status.split('\n')) {
+    const m = line.match(/^(..) (.+)$/);
+    if (m) gitState.set(m[2].trim(), m[1].includes('?') ? 'new' : 'modified');
+  }
+  const scripts = [];
+  for (const dir of ['bots', 'lib', 'tools']) {
+    for (const f of fs.readdirSync(path.join(repoRoot, dir)).filter((f) => f.endsWith('.mjs'))) {
+      const rel = `${dir}/${f}`;
+      const st = fs.statSync(path.join(repoRoot, rel));
+      scripts.push({ file: rel, size: st.size, mtime: st.mtimeMs, git: gitState.get(rel) ?? 'committed' });
+    }
+  }
+  scripts.sort((a, b) => b.mtime - a.mtime);
+  json(res, 200, scripts);
+});
 route('POST', /^\/api\/agent\/runs$/, (req, res, m, body) => {
   const prompt = String(body?.prompt ?? '').trim();
   if (!prompt) throw new Error('prompt is required');

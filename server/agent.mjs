@@ -105,6 +105,58 @@ export function cancelDeviceAuth() {
   if (deviceAuth && !deviceAuth.done) deviceAuth.child.kill('SIGTERM');
 }
 
+// ── Activity feed ───────────────────────────────────────────────────────
+// Everything the operator actually DID — commands it executed, files it
+// touched — digested from each run's event log (live runs included, since
+// their events only reach disk at completion).
+
+function digestRun(run) {
+  const commands = [];
+  const files = new Set();
+  for (const event of run.events) {
+    if (event.type !== 'item.completed' || !event.item) continue;
+    const item = event.item;
+    if (item.type === 'command_execution') {
+      commands.push({
+        command: String(item.command ?? ''),
+        output: String(item.aggregated_output ?? '').slice(-1200),
+        exitCode: item.exit_code ?? null,
+      });
+    }
+    if (Array.isArray(item.changes)) {
+      for (const change of item.changes) if (change?.path) files.add(`${change.kind ?? 'edit'}: ${change.path}`);
+    }
+  }
+  const lastMessage = run.events
+    .filter((e) => e.type === 'item.completed' && e.item?.type === 'agent_message')
+    .map((e) => e.item.text).pop() ?? null;
+  return {
+    id: run.id,
+    prompt: run.prompt,
+    status: run.status,
+    startedAt: run.startedAt,
+    finishedAt: run.finishedAt,
+    commands,
+    files: [...files],
+    lastMessage: lastMessage ? String(lastMessage).slice(0, 1500) : null,
+  };
+}
+
+export function activity() {
+  const live = [...active.values()].map((entry) => entry.run);
+  const liveIds = new Set(live.map((run) => run.id));
+  const finished = [];
+  try {
+    for (const f of fs.readdirSync(runsDir)) {
+      if (!f.endsWith('.json')) continue;
+      const run = JSON.parse(fs.readFileSync(path.join(runsDir, f), 'utf8'));
+      if (!liveIds.has(run.id)) finished.push(run);
+    }
+  } catch { /* none yet */ }
+  finished.sort((a, b) => b.startedAt - a.startedAt);
+  return [...live, ...finished].slice(0, 15).map(digestRun);
+}
+
 // ── Runs ────────────────────────────────────────────────────────────────
 
 function runPath(id) {

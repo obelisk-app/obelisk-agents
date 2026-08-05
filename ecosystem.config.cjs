@@ -61,6 +61,16 @@ module.exports = {
       max_restarts: 10,
       env: baseEnv,
     },
+    {
+      name: 'obelisk-empanadas-price-bot',
+      script: 'bots/empanadas-price-bot.mjs',
+      cwd,
+      node_args: nodeArgs,
+      watch: false,
+      autorestart: true,
+      max_restarts: 10,
+      env: baseEnv,
+    },
     // ── Add additional bots here ──
 
     // Management web UI + API (bots.obelisk.ar). Not a bot: it is the

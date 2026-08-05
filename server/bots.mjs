@@ -196,6 +196,37 @@ function ecosystemAppOrThrow(name) {
   return app;
 }
 
+// ── Removal ─────────────────────────────────────────────────────────────
+// Deliberately reversible-ish: PM2 entry and ecosystem stanza go away, the
+// script moves to a trash dir, and the bot's env lines (nsec included) are
+// commented out — never deleted, an nsec is unrecoverable otherwise.
+export async function removeBot(name) {
+  const app = ecosystemAppOrThrow(name);
+  await execFileP('pm2', ['delete', name]).catch(() => {});
+  await execFileP('pm2', ['save', '--force']).catch(() => {});
+
+  const ecoPath = path.join(repoRoot, 'ecosystem.config.cjs');
+  const src = fs.readFileSync(ecoPath, 'utf8');
+  const stanza = new RegExp(`\\n\\s*\\{[^{}]*name: '${name}'[\\s\\S]*?\\n\\s*\\},`);
+  if (stanza.test(src)) fs.writeFileSync(ecoPath, src.replace(stanza, ''));
+
+  const { stateDir } = await import('./config.mjs');
+  const trashDir = path.join(stateDir, 'trash');
+  fs.mkdirSync(trashDir, { recursive: true });
+  const scriptPath = path.join(repoRoot, app.script);
+  let archivedTo = null;
+  if (fs.existsSync(scriptPath)) {
+    archivedTo = path.join(trashDir, `${path.basename(app.script)}.${Date.now()}`);
+    fs.renameSync(scriptPath, archivedTo);
+  }
+
+  const prefix = envPrefix(app.script);
+  const keys = Object.keys(readEnvMap()).filter((k) => k.startsWith(`${prefix}_`));
+  if (keys.length) applyEnvChanges({ unset: keys });
+
+  return { removed: name, archivedTo, envCommented: keys };
+}
+
 // ── Avatar upload: frontend → manager → bot-signed Blossom upload →
 // merged kind 0 published to relays ──────────────────────────────────────
 function botSecret(name) {
