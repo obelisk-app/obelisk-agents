@@ -13,6 +13,7 @@ interface FieldProps {
   set: boolean // secrets: whether a value exists server-side
   secret: boolean
   relaysHint: string // current relays value, feeds the group picker
+  botName?: string // group picker auths as this bot (member-gated relays)
   onChange: (v: string) => void
 }
 
@@ -151,12 +152,11 @@ function ChipList({ value, onChange, placeholder, mono, shorten }: FieldProps & 
   )
 }
 
-// The anti-"program a JSON file" widget: shows every group on the bot's
-// relays by NAME with a checkbox; the wss://relay|id strings stay under
-// the hood.
-function GroupPicker({ value, relaysHint, onChange }: FieldProps) {
+// The anti-"program a JSON file" widget: shows every channel the dex sees
+// (all channel relays, queried server-side in parallel, authed as the bot)
+// by NAME with a checkbox; the wss://relay|id strings stay under the hood.
+function GroupPicker({ value, botName, onChange }: FieldProps) {
   const selected = new Set(value.split(',').map((s) => s.trim()).filter(Boolean))
-  const relays = relaysHint.split(',').map((s) => s.trim()).filter((s) => /^wss?:\/\//.test(s))
   const [available, setAvailable] = useState<Map<string, { id: string; name: string; access: string }[]>>(new Map())
   const [loading, setLoading] = useState(true)
   const [manual, setManual] = useState('')
@@ -164,17 +164,15 @@ function GroupPicker({ value, relaysHint, onChange }: FieldProps) {
   useEffect(() => {
     let alive = true
     setLoading(true)
-    type GroupList = { id: string; name: string; access: string }[]
-    Promise.all(relays.slice(0, 4).map(async (relay): Promise<[string, GroupList]> => {
-      try { return [relay, await api.groups(relay)] }
-      catch { return [relay, []] }
-    })).then((results) => {
-      if (!alive) return
-      setAvailable(new Map(results.filter(([, groups]) => groups.length > 0)))
-      setLoading(false)
-    })
+    api.channels(botName)
+      .then((entries) => {
+        if (!alive) return
+        setAvailable(new Map(entries.map((e) => [e.relay, e.groups])))
+        setLoading(false)
+      })
+      .catch(() => { if (alive) setLoading(false) })
     return () => { alive = false }
-  }, [relaysHint])
+  }, [botName])
 
   const toggle = (key: string) => {
     const next = new Set(selected)
@@ -211,11 +209,16 @@ function GroupPicker({ value, relaysHint, onChange }: FieldProps) {
             {groups.length > 30 && (
               <span class="text-xs text-lc-muted self-center">+{groups.length - 30} more (add by id below)</span>
             )}
+            {groups.length === 0 && (
+              <span class="text-xs text-lc-muted/70 self-center">
+                no channels visible — this relay only shows its groups to members, so admit the bot there first (or add by id below)
+              </span>
+            )}
           </div>
         </div>
       ))}
       {!loading && available.size === 0 && (
-        <p class="text-xs text-lc-muted">No groups visible on this bot's relays (add relays above, or add a group manually below).</p>
+        <p class="text-xs text-lc-muted">Could not reach the channel relays — add a group manually below.</p>
       )}
       {orphans.map((o) => (
         <span key={o} class="inline-flex items-center gap-1.5 bg-lc-card border border-lc-border rounded-full px-2.5 py-1 text-xs font-mono mr-1.5" title="not found on the relays right now">

@@ -113,6 +113,11 @@ export const api = {
 
   groups: (relay: string) =>
     req<{ id: string; access: string; name: string }[]>(`/api/groups?relay=${encodeURIComponent(relay)}`),
+  // dex-style channel menu: every channel relay in parallel, authed as the
+  // bot when given so member-gated relays reveal their groups.
+  channels: (bot?: string) =>
+    req<{ relay: string; groups: { id: string; name: string; about: string; access: string }[] }[]>(
+      `/api/channels${bot ? `?bot=${encodeURIComponent(bot)}` : ''}`),
 
   agentStatus: () => req<AgentStatus>('/api/agent/status'),
   agentApiKey: (key: string) =>

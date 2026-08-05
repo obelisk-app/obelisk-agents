@@ -199,6 +199,7 @@ function EnvSection({ bot, onSaved, onError }: {
       set={!!entry.set}
       secret={entry.secret}
       relaysHint={relaysHint}
+      botName={bot.name}
       onChange={(v) => setEdits((prev) => ({ ...prev, [entry.key]: v }))}
     />
   )

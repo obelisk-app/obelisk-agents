@@ -305,6 +305,82 @@ export async function setAvatar(name, buffer, mime) {
   return { url, output };
 }
 
+// ── Channel discovery (mirrors obelisk-dex's channels menu) ─────────────
+// Queries kind 39000 on the same relays the dex uses (public +
+// lacrypta-relay, override via MANAGER_CHANNEL_RELAYS) plus the bot's own
+// relays, in parallel, authenticated as the BOT when one is given —
+// member-gated relays (lacrypta) only reveal their groups to keys they
+// know, so the picker fills in once the bot is admitted.
+const CHANNEL_RELAYS = (process.env.MANAGER_CHANNEL_RELAYS
+  ?? 'wss://public.obelisk.ar,wss://lacrypta-relay.obelisk.ar')
+  .split(',').map((s) => s.trim()).filter(Boolean);
+
+const channelCache = new Map(); // cacheKey -> { at, data }
+
+export async function listChannels(botName) {
+  const cacheKey = botName ?? '(anon)';
+  const cached = channelCache.get(cacheKey);
+  if (cached && Date.now() - cached.at < 60_000) return cached.data;
+
+  const env = readEnvMap();
+  let sk = null;
+  let botRelays = [];
+  if (botName) {
+    try {
+      const app = ecosystemAppOrThrow(botName);
+      sk = parseSecret(env[nsecEnvFor(app, env)]);
+      const prefix = envPrefix(app.script);
+      botRelays = (env[`${prefix}_RELAYS`] ?? env.BOT_RELAYS ?? '')
+        .split(',').map((s) => s.trim())
+        .filter((r) => /^wss?:\/\/[^/]*obelisk/.test(r)); // only NIP-29-ish hosts
+    } catch { /* fall through to anonymous listing */ }
+  }
+  const { generateSecretKey } = await import('nostr-tools');
+  const { createPool } = await import('../lib/pool.mjs');
+  const pool = createPool(sk ?? generateSecretKey());
+  const relays = [...new Set([...CHANNEL_RELAYS, ...botRelays])];
+
+  const listOne = (relay) => new Promise((resolve) => {
+    const groups = new Map();
+    const finish = () => resolve({
+      relay,
+      groups: [...groups.values()].sort((a, b) => a.name.localeCompare(b.name)),
+    });
+    const timer = setTimeout(finish, 8000);
+    let sub;
+    try {
+      sub = pool.subscribe([relay], { kinds: [39000] }, {
+        onevent(ev) {
+          const id = ev.tags.find((t) => t[0] === 'd')?.[1];
+          if (!id) return;
+          const prev = groups.get(id);
+          if (prev && prev.created_at >= ev.created_at) return;
+          groups.set(id, {
+            id,
+            created_at: ev.created_at,
+            name: ev.tags.find((t) => t[0] === 'name')?.[1] ?? id,
+            about: ev.tags.find((t) => t[0] === 'about')?.[1] ?? '',
+            access: `${ev.tags.some((t) => t[0] === 'closed') ? 'closed' : 'open'}/${ev.tags.some((t) => t[0] === 'private') ? 'private' : 'public'}`,
+          });
+        },
+        oneose() { clearTimeout(timer); try { sub.close(); } catch { /* closing */ } finish(); },
+        onclose() { clearTimeout(timer); finish(); },
+      });
+    } catch {
+      clearTimeout(timer);
+      finish();
+    }
+  });
+
+  const data = await Promise.all(relays.map(listOne));
+  for (const entry of data) {
+    entry.groups = entry.groups.map(({ created_at, ...g }) => g);
+  }
+  try { pool.close(relays); } catch { /* already closed */ }
+  channelCache.set(cacheKey, { at: Date.now(), data });
+  return data;
+}
+
 // ── Groups on a relay ───────────────────────────────────────────────────
 export async function listGroups(relay) {
   if (!/^wss?:\/\//.test(relay)) throw new Error('relay must be a ws:// or wss:// URL');

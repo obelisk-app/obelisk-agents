@@ -109,6 +109,13 @@ route('PUT', /^\/api\/env$/, (req, res, m, body) => {
 route('GET', /^\/api\/groups$/, async (req, res, m, body, url) =>
   json(res, 200, await listGroups(url.searchParams.get('relay') || 'wss://public.obelisk.ar')));
 
+// Channel menu, dex-style: all channel relays in parallel, authed as the
+// bot when ?bot= is given (member-gated relays reveal more to known keys).
+route('GET', /^\/api\/channels$/, async (req, res, m, body, url) => {
+  const { listChannels } = await import('./bots.mjs');
+  json(res, 200, await listChannels(url.searchParams.get('bot') || undefined));
+});
+
 // ── AI operator (Codex) ─────────────────────────────────────────────────
 route('GET', /^\/api\/agent\/status$/, async (req, res) => json(res, 200, await agent.agentStatus()));
 route('POST', /^\/api\/agent\/api-key$/, async (req, res, m, body) =>
