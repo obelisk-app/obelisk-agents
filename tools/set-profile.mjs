@@ -72,8 +72,43 @@ console.log(`[set-profile] identity:  ${npub}`);
 console.log(`[set-profile] relays:    ${RELAYS.join(', ')}`);
 console.log(`[set-profile] payload:   ${JSON.stringify(profile)}`);
 
-const results = await Promise.allSettled(pool.publish(RELAYS, ev));
-const ok = results.filter((r) => r.status === 'fulfilled').length;
-const failed = results.length - ok;
-console.log(`[set-profile] published kind:0 to ${ok}/${results.length} relays${failed ? ` (${failed} failed)` : ''}.`);
+// Warm each connection so NIP-42 AUTH completes before we publish — some
+// relays drop the first event on a fresh connection if AUTH is still in
+// flight, which then masquerades as a generic rejection.
+await new Promise((resolve) => {
+  const sub = pool.subscribe(RELAYS, { kinds: [0], authors: [pk], limit: 1 }, {
+    onauth: async () => null,
+    oneose: () => { try { sub.close(); } catch {} resolve(); },
+    onclose: () => resolve(),
+  });
+  setTimeout(resolve, 2500);
+});
+
+async function publishWithReport() {
+  const results = await Promise.allSettled(pool.publish(RELAYS, ev));
+  return results.map((r, i) => ({
+    relay: RELAYS[i],
+    ok: r.status === 'fulfilled',
+    reason: r.status === 'rejected' ? (r.reason?.message || String(r.reason)) : null,
+  }));
+}
+
+let report = await publishWithReport();
+// Retry the rejected ones once after a short delay (auth-race recovery).
+const retries = report.filter((r) => !r.ok).map((r) => r.relay);
+if (retries.length) {
+  await new Promise((res) => setTimeout(res, 1500));
+  const second = await Promise.allSettled(pool.publish(retries, ev));
+  for (let i = 0; i < retries.length; i++) {
+    const idx = report.findIndex((r) => r.relay === retries[i]);
+    if (second[i].status === 'fulfilled') report[idx] = { relay: retries[i], ok: true, reason: null };
+    else report[idx].reason = second[i].reason?.message || String(second[i].reason);
+  }
+}
+
+for (const r of report) {
+  console.log(`  ${r.ok ? '✓' : '✗'} ${r.relay}${r.ok ? '' : ` — ${r.reason}`}`);
+}
+const ok = report.filter((r) => r.ok).length;
+console.log(`[set-profile] ${ok}/${report.length} relays accepted kind:0.`);
 process.exit(0);
