@@ -220,6 +220,10 @@ function EnvSection({ bot, onSaved, onError }: {
         )
       }
     >
+      <p class="text-xs text-lc-muted mb-3 -mt-1">
+        These settings belong to this bot only. Anything left empty falls back to the fleet-wide
+        defaults on the <a href="/settings" class="text-lc-green hover:underline">Settings</a> page.
+      </p>
       {order.map((section) => {
         const entries = grouped.get(section)
         if (!entries?.length) return null

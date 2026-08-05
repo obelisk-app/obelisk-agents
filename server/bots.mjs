@@ -90,7 +90,15 @@ export async function botsOverview() {
   return procs.map((proc) => {
     const app = ecosystemApps().find((a) => a.name === proc.name);
     const nsecEnv = nsecEnvFor(app, env);
-    const vars = scriptEnvVars(app.script);
+    const prefix = envPrefix(app.script);
+    const all = scriptEnvVars(app.script);
+    // Bots read <PREFIX>_X with BOT_X / AGENT_X fallbacks. Showing both on
+    // the bot's page duplicates every field — keep only the bot's own var;
+    // the fleet-wide fallback is edited on the Settings page.
+    const vars = all.filter((key) => {
+      const m = key.match(/^(?:BOT|AGENT)_(.+)$/);
+      return !m || !all.includes(`${prefix}_${m[1]}`);
+    });
     return {
       ...proc,
       kind: botKind(app.script),

@@ -194,6 +194,9 @@ function GroupPicker({ value, botName, onChange }: FieldProps) {
             {groups.slice(0, 30).map((g) => {
               const key = `${relay}|${g.id}`
               const on = selected.has(key)
+              // Two groups can share a display name — disambiguate with a
+              // short id suffix so the chips aren't identical twins.
+              const dupes = groups.filter((o) => o.name === g.name).length > 1
               return (
                 <button type="button" key={key}
                   class={`text-xs rounded-full px-3 py-1.5 border transition-colors ${
@@ -203,6 +206,7 @@ function GroupPicker({ value, botName, onChange }: FieldProps) {
                   title={`${g.access} · ${g.id}`}
                   onClick={() => toggle(key)}>
                   {on ? '✓ ' : ''}{g.name || g.id.slice(0, 10)}
+                  {dupes && <span class="opacity-50"> ·{g.id.slice(0, 4)}</span>}
                 </button>
               )
             })}
