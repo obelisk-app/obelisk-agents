@@ -158,7 +158,7 @@ export function buildPrompt({ name, prefix, description, relays, groups, kind = 
       description || '(no description — leave the default behavior)',
       `"""`,
       ``,
-      `Read docs/agents.md and lib/agent-bot.mjs first. If the description fits the stock runtime, only refine ${prefix}_SYSTEM_PROMPT in .env.local (never print ${prefix}_NSEC or any *_LLM_API_KEY). If it needs extra behaviors (commands, scraping, scheduled posts), extend bots/${name}.mjs alongside runAgent() reusing lib/ helpers, and record any ! commands you add in bots/${name}.commands.json ({"commands":[{"command","description","example"}]}) — the panel shows it to the admin. Validate with node --check and a brief foreground test; the admin starts it from the panel afterwards (pm2 is not reachable from your sandbox). Do not touch other bots. Do not commit.`,
+      `Read docs/agents.md and lib/agent-bot.mjs first. If the description fits the stock runtime, only refine ${prefix}_SYSTEM_PROMPT in .env.local (never print ${prefix}_NSEC or any *_LLM_API_KEY). If it needs extra behaviors (commands, scraping, scheduled posts), extend bots/${name}.mjs alongside runAgent() reusing lib/ helpers, and record any ! commands you add in bots/${name}.commands.json ({"commands":[{"command","description","example"}]}) — the panel shows it to the admin. Validate with node --check and a brief foreground test, then just report readiness — the panel auto-starts it and announces it in its channels when you finish successfully (pm2 is not reachable from your sandbox). Do not touch other bots. Do not commit.`,
     ].join('\n');
   }
   return [
@@ -180,7 +180,7 @@ export function buildPrompt({ name, prefix, description, relays, groups, kind = 
     `- external data (scraping / HTTP APIs): plain fetch with a sane interval, timeout and backoff — no new dependencies`,
     `- one filter per subscription; track seen event ids; ignore the bot's own events`,
     `- validate with node --check, then a short foreground test run (e.g. timeout 30s node --env-file-if-exists=.env.local bots/${name}.mjs) and confirm it prints "running as npub"`,
-    `- when it works, note it is ready — the admin starts/restarts it from the panel (pm2 is not reachable from your sandbox)`,
+    `- when it works, just report readiness — the panel auto-starts the bot and announces it in its channels the moment you finish successfully (pm2 is not reachable from your sandbox)`,
     `- REQUIRED: write bots/${name}.commands.json describing every chat command the bot answers:`,
     `  {"commands": [{"command": "!x", "description": "what it does / triggers", "example": "!x arg"}]}`,
     `  (empty "commands" array + a "note" field if the bot has no commands). The panel shows this to the admin.`,
@@ -233,6 +233,39 @@ function ecosystemAppOrThrow(name) {
   const app = ecosystemApps().find((a) => a.name === name);
   if (!app) throw new Error(`unknown bot: ${name}`);
   return app;
+}
+
+// ── Birth announcement ──────────────────────────────────────────────────
+// Posted AS the bot in each of its groups right after an automatic start,
+// so the channel knows a new member is live and what it answers to.
+export async function announceActive(name) {
+  const app = ecosystemAppOrThrow(name);
+  const env = readEnvMap();
+  const { sk } = botSecret(name);
+  const prefix = envPrefix(app.script);
+  const { createPool, parseGroupList } = await import('../lib/pool.mjs');
+  const groups = parseGroupList(env[`${prefix}_GROUPS`] ?? env.BOT_GROUPS ?? '');
+  if (!groups.length) return { announced: 0, of: 0 };
+  const cmds = commandsFor(app.script).map((c) => c.command);
+  const short = name.replace(/^obelisk-/, '');
+  const text = `🤖 ${short} is now active${cmds.length ? ` — commands: ${cmds.join(', ')}` : ''}`;
+  const { finalizeEvent } = await import('nostr-tools');
+  const pool = createPool(sk);
+  let ok = 0;
+  for (const g of groups) {
+    const ev = finalizeEvent({
+      kind: 9,
+      created_at: Math.floor(Date.now() / 1000),
+      tags: [['h', g.groupId]],
+      content: text,
+    }, sk);
+    try {
+      await Promise.any(pool.publish([g.relay], ev));
+      ok += 1;
+    } catch { /* not admitted there yet */ }
+  }
+  try { pool.close([...new Set(groups.map((g) => g.relay))]); } catch { /* closing */ }
+  return { announced: ok, of: groups.length, text };
 }
 
 // ── Removal ─────────────────────────────────────────────────────────────

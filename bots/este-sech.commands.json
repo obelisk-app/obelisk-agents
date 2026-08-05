@@ -1,5 +1,0 @@
-{
-  "commands": [
-    { "command": "!ping", "description": "Scaffold-template echo — replies 'pong'", "example": "!ping" }
-  ]
-}

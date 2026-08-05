@@ -1,0 +1,9 @@
+{
+  "commands": [
+    {
+      "command": "!atun",
+      "description": "Muestra el último precio comprobado de una lata de atún al natural DIA de 170 g",
+      "example": "!atun"
+    }
+  ]
+}

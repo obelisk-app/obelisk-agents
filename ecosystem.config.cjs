@@ -52,8 +52,8 @@ module.exports = {
       env: baseEnv,
     },
     {
-      name: 'obelisk-este-sech',
-      script: 'bots/este-sech.mjs',
+      name: 'obelisk-empanadas-price-bot',
+      script: 'bots/empanadas-price-bot.mjs',
       cwd,
       node_args: nodeArgs,
       watch: false,
@@ -62,8 +62,8 @@ module.exports = {
       env: baseEnv,
     },
     {
-      name: 'obelisk-empanadas-price-bot',
-      script: 'bots/empanadas-price-bot.mjs',
+      name: 'obelisk-precio-latas-atun',
+      script: 'bots/precio-latas-atun.mjs',
       cwd,
       node_args: nodeArgs,
       watch: false,

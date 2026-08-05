@@ -213,7 +213,7 @@ function broadcast(run, payload) {
   for (const res of entry.subscribers) res.write(data);
 }
 
-export function startRun(prompt) {
+export function startRun(prompt, { onFinished } = {}) {
   if (!fs.existsSync(codexAuthPath)) {
     throw new Error('codex is not logged in — connect a subscription or API key first');
   }
@@ -263,7 +263,7 @@ export function startRun(prompt) {
     }
   });
   child.stderr.on('data', (chunk) => onEvent({ type: 'stderr', text: String(chunk) }));
-  child.on('close', (code) => {
+  child.on('close', async (code) => {
     run.status = code === 0 ? 'done' : 'failed';
     run.finishedAt = Date.now();
     run.exitCode = code;
@@ -271,6 +271,20 @@ export function startRun(prompt) {
     broadcast(run, { type: 'finished', status: run.status, exitCode: code });
     for (const res of active.get(id)?.subscribers ?? []) res.end();
     active.delete(id);
+    // Post-run hook (e.g. auto-start + announce a freshly built bot); its
+    // note lands in the stored transcript and the activity feed.
+    if (onFinished) {
+      try {
+        const note = await onFinished(run);
+        if (note) {
+          run.events.push({ type: 'raw', text: note });
+          saveRun(run);
+        }
+      } catch (err) {
+        run.events.push({ type: 'stderr', text: `post-run hook failed: ${err.message}` });
+        saveRun(run);
+      }
+    }
   });
   saveRun(run);
   return { id };

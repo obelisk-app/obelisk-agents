@@ -162,17 +162,43 @@ function EnvSection({ bot, onSaved, onError }: {
   onError: (msg: string) => void
 }) {
   const [edits, setEdits] = useState<Record<string, string>>({})
+  const [savedOverlay, setSavedOverlay] = useState<Record<string, string>>({})
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle')
+  const [needsRestart, setNeedsRestart] = useState(false)
   const [busy, setBusy] = useState(false)
-  const dirty = Object.keys(edits).length > 0
 
-  const save = async (restart: boolean) => {
+  // Autosave: every edit lands in .env.local ~1s after you stop typing —
+  // nothing is ever lost. The bot picks changes up on restart.
+  useEffect(() => {
+    const keys = Object.keys(edits)
+    if (!keys.length) return
+    const timer = setTimeout(async () => {
+      const batch = { ...edits }
+      setSaveState('saving')
+      try {
+        await api.saveEnv(batch)
+        setSavedOverlay((prev) => ({ ...prev, ...batch }))
+        setEdits((prev) => {
+          const next = { ...prev }
+          for (const k of Object.keys(batch)) if (next[k] === batch[k]) delete next[k]
+          return next
+        })
+        setSaveState('saved')
+        setNeedsRestart(true)
+      } catch (e) {
+        setSaveState('idle')
+        onError(`autosave failed: ${(e as Error).message}`)
+      }
+    }, 1200)
+    return () => clearTimeout(timer)
+  }, [edits])
+
+  const restart = async () => {
     setBusy(true)
-    onError('')
     try {
-      await api.saveEnv(edits)
-      if (restart) await api.botAction(bot.name, 'restart')
-      setEdits({})
-      onSaved(restart ? 'Settings saved — bot restarted with the new config.' : 'Settings saved. Restart the bot to apply.')
+      await api.botAction(bot.name, 'restart')
+      setNeedsRestart(false)
+      onSaved('Restarted — the new settings are live.')
     } catch (e) {
       onError((e as Error).message)
     } finally {
@@ -180,7 +206,8 @@ function EnvSection({ bot, onSaved, onError }: {
     }
   }
 
-  const valueOf = (entry: EnvEntry) => edits[entry.key] ?? (entry.secret ? '' : entry.value ?? '')
+  const valueOf = (entry: EnvEntry) =>
+    edits[entry.key] ?? (entry.secret ? '' : savedOverlay[entry.key] ?? entry.value ?? '')
   const relaysEntry = bot.envVars.find((e) => /_RELAYS$/.test(e.key) && !/_LISTEN_RELAYS$/.test(e.key))
   const relaysHint = (relaysEntry && valueOf(relaysEntry)) || 'wss://public.obelisk.ar'
 
@@ -210,19 +237,28 @@ function EnvSection({ bot, onSaved, onError }: {
     <Section
       title="Settings"
       actions={
-        dirty && (
-          <div class="flex gap-2">
-            <button class="lc-pill-secondary text-xs !py-1.5" disabled={busy} onClick={() => save(false)}>Save</button>
-            <button class="lc-pill-primary text-xs !py-1.5" disabled={busy} onClick={() => save(true)}>
-              {busy ? '…' : 'Save + restart'}
+        <div class="flex items-center gap-2">
+          {(saveState === 'saving' || Object.keys(edits).length > 0) && (
+            <span class="text-xs text-lc-muted flex items-center gap-1.5">
+              <span class="lc-spinner !w-3 !h-3" /> saving…
+            </span>
+          )}
+          {saveState === 'saved' && Object.keys(edits).length === 0 && (
+            <span class="text-xs text-lc-green">✓ saved</span>
+          )}
+          {needsRestart && (
+            <button class="lc-pill-primary text-xs !py-1.5" disabled={busy} onClick={restart}>
+              {busy ? '…' : 'Restart to apply'}
             </button>
-          </div>
-        )
+          )}
+        </div>
       }
     >
       <p class="text-xs text-lc-muted mb-3 -mt-1">
-        These settings belong to this bot only. Anything left empty falls back to the fleet-wide
-        defaults on the <a href="/settings" class="text-lc-green hover:underline">Settings</a> page.
+        Changes <span class="text-lc-green">save automatically</span> as you edit; hit "Restart to
+        apply" when you're done so the bot reloads them. These settings belong to this bot only —
+        anything left empty falls back to the fleet-wide defaults on the{' '}
+        <a href="/settings" class="text-lc-green hover:underline">Settings</a> page.
       </p>
       {order.map((section) => {
         const entries = grouped.get(section)

@@ -43,27 +43,35 @@ export function Settings(_props: { path?: string }) {
     api.env().then(setEntries).catch((e) => setError(e.message))
   }, [])
 
-  const dirty = Object.keys(edits).length > 0
   const entryFor = (key: string): EnvEntry =>
     entries?.find((e) => e.key === key)
       ?? { key, secret: /KEY|NSEC|TOKEN|SECRET/.test(key), set: false, value: '' }
   const valueOf = (entry: EnvEntry) => edits[entry.key] ?? (entry.secret ? '' : entry.value ?? '')
   const setValue = (key: string, value: string) => setEdits((prev) => ({ ...prev, [key]: value }))
 
-  const save = async () => {
-    setBusy(true)
-    setError('')
-    try {
-      const { entries: fresh } = await api.saveEnv(edits)
-      setEntries(fresh)
-      setEdits({})
-      toast.ok('Saved. Restart affected bots from the fleet page to apply.')
-    } catch (e) {
-      setError((e as Error).message)
-    } finally {
-      setBusy(false)
-    }
-  }
+  // Autosave ~1s after the last edit — nothing gets lost by navigating away.
+  useEffect(() => {
+    if (!Object.keys(edits).length) return
+    const timer = setTimeout(async () => {
+      const batch = { ...edits }
+      setBusy(true)
+      try {
+        const { entries: fresh } = await api.saveEnv(batch)
+        setEntries(fresh)
+        setEdits((prev) => {
+          const next = { ...prev }
+          for (const k of Object.keys(batch)) if (next[k] === batch[k]) delete next[k]
+          return next
+        })
+        toast.ok('Saved — restart affected bots from the fleet page to apply.')
+      } catch (e) {
+        setError((e as Error).message)
+      } finally {
+        setBusy(false)
+      }
+    }, 1200)
+    return () => clearTimeout(timer)
+  }, [edits])
 
   if (!entries) return error ? <Flash kind="err" text={error} /> : <div class="lc-card h-64 lc-skeleton" />
 
@@ -101,14 +109,15 @@ export function Settings(_props: { path?: string }) {
     <div class="animate-fade-in-up">
       <div class="flex items-center justify-between mb-2">
         <h1 class="text-2xl font-extrabold">Settings</h1>
-        {dirty && (
-          <button class="lc-pill-primary" disabled={busy} onClick={save}>
-            {busy ? <span class="lc-spinner" /> : `Save ${Object.keys(edits).length} change${Object.keys(edits).length > 1 ? 's' : ''}`}
-          </button>
+        {(busy || Object.keys(edits).length > 0) && (
+          <span class="text-xs text-lc-muted flex items-center gap-1.5">
+            <span class="lc-spinner !w-3 !h-3" /> saving…
+          </span>
         )}
       </div>
       <p class="text-sm text-lc-muted mb-6">
-        Fleet-wide defaults. Each bot's own page can override any of this for itself.
+        Fleet-wide defaults — changes <span class="text-lc-green">save automatically</span>.
+        Each bot's own page can override any of this for itself.
       </p>
 
       <Flash kind="err" text={error} />

@@ -65,12 +65,28 @@ route('POST', /^\/api\/bots$/, async (req, res, m, body) => {
   if (body?.build) {
     const status = await agent.agentStatus();
     if (status.mode === 'none') throw new Error(`scaffolded ${created.name}, but Codex is not connected — build skipped`);
+    const appName = `obelisk-${created.name}`;
     runId = agent.startRun(buildPrompt({
       ...created,
       description: String(body?.description ?? ''),
       relays: body?.relays,
       groups: body?.groups,
-    })).id;
+    }), {
+      // Codex can't reach PM2 from its sandbox — the manager takes over
+      // once the build succeeds: start the bot and let it introduce itself.
+      onFinished: async (run) => {
+        if (run.status !== 'done') return null;
+        try {
+          await botAction(appName, 'restart');
+        } catch {
+          await botAction(appName, 'start');
+        }
+        const { announceActive } = await import('./bots.mjs');
+        const result = await announceActive(appName).catch((err) => ({ error: err.message }));
+        if (result.error) return `✅ auto-started ${appName}; announcement failed: ${result.error}`;
+        return `✅ auto-started ${appName} and announced it in ${result.announced}/${result.of} channel(s)`;
+      },
+    }).id;
   }
   json(res, 200, { ...created, runId });
 });
