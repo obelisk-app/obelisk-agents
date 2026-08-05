@@ -61,6 +61,10 @@ import { runAgent } from '../lib/agent-bot.mjs';
 
 runAgent({ name: '${name}', envPrefix: '${ENV}' });
 
+// Keep the process alive through relay disconnects (PM2 would otherwise
+// see a clean exit and restart-loop us).
+setInterval(() => {}, 60_000);
+
 process.on('SIGINT', () => process.exit(0));
 process.on('SIGTERM', () => process.exit(0));
 `;
@@ -114,6 +118,10 @@ for (const { relay, groupId } of GROUPS) {
     },
   );
 }
+
+// Keep the process alive through relay disconnects (PM2 would otherwise
+// see a clean exit and restart-loop us).
+setInterval(() => {}, 60_000);
 
 process.on('SIGINT', () => process.exit(0));
 process.on('SIGTERM', () => process.exit(0));

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { api, Bot, EnvEntry } from '../api'
+import { Section as SettingsSection, metaFor, SECTION_TITLES } from '../settings-meta'
+import { SettingField } from './fields'
 import { CopyChip, Flash, Section, StatusDot, fmtUptime, shortNpub } from './ui'
 
 export function BotDetail({ name }: { name: string; path?: string }) {
@@ -50,7 +52,7 @@ export function BotDetail({ name }: { name: string; path?: string }) {
   )
 }
 
-// ── Per-bot settings: exactly the env vars this bot's source reads ──────
+// ── Per-bot settings: semantic form built from the vars this bot reads ──
 function EnvSection({ bot, onSaved, onError }: {
   bot: Bot
   onSaved: (msg: string) => void
@@ -75,21 +77,30 @@ function EnvSection({ bot, onSaved, onError }: {
     }
   }
 
-  const input = (entry: EnvEntry) => {
-    const edited = edits[entry.key]
-    return (
-      <input
-        class="lc-input font-mono text-xs"
-        type={entry.secret ? 'password' : 'text'}
-        placeholder={entry.secret ? (entry.set ? '•••••• (set — type to replace)' : 'not set') : ''}
-        value={edited ?? (entry.secret ? '' : entry.value ?? '')}
-        onInput={(e) => {
-          const v = (e.target as HTMLInputElement).value
-          setEdits((prev) => ({ ...prev, [entry.key]: v }))
-        }}
-      />
-    )
+  const valueOf = (entry: EnvEntry) => edits[entry.key] ?? (entry.secret ? '' : entry.value ?? '')
+  const relaysEntry = bot.envVars.find((e) => /_RELAYS$/.test(e.key) && !/_LISTEN_RELAYS$/.test(e.key))
+  const relaysHint = (relaysEntry && valueOf(relaysEntry)) || 'wss://relay.obelisk.ar'
+
+  const grouped = new Map<SettingsSection, EnvEntry[]>()
+  for (const entry of bot.envVars) {
+    const section = metaFor(entry.key).section
+    grouped.set(section, [...(grouped.get(section) ?? []), entry])
   }
+
+  const renderField = (entry: EnvEntry) => (
+    <SettingField
+      key={entry.key}
+      envKey={entry.key}
+      meta={metaFor(entry.key)}
+      value={valueOf(entry)}
+      set={!!entry.set}
+      secret={entry.secret}
+      relaysHint={relaysHint}
+      onChange={(v) => setEdits((prev) => ({ ...prev, [entry.key]: v }))}
+    />
+  )
+
+  const order: SettingsSection[] = ['identity', 'connection', 'behavior', 'llm']
 
   return (
     <Section
@@ -105,21 +116,26 @@ function EnvSection({ bot, onSaved, onError }: {
         )
       }
     >
-      <p class="text-xs text-lc-muted mb-4">
-        Every env var this bot reads, straight from <code class="text-lc-green">.env.local</code>.
-        Relay lists and group lists are comma-separated (<span class="font-mono">wss://relay|groupId</span> for groups).
-      </p>
-      <div class="grid gap-3 md:grid-cols-2">
-        {bot.envVars.map((entry) => (
-          <label key={entry.key} class="block">
-            <span class="text-xs font-mono text-lc-muted flex justify-between mb-1">
-              {entry.key}
-              {entry.secret && <span class="text-lc-green/70">{entry.set ? 'secret · set' : 'secret · empty'}</span>}
-            </span>
-            {input(entry)}
-          </label>
-        ))}
-      </div>
+      {order.map((section) => {
+        const entries = grouped.get(section)
+        if (!entries?.length) return null
+        return (
+          <div key={section} class="mb-5">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-lc-muted mb-1">
+              {SECTION_TITLES[section]}
+            </h3>
+            {entries.map(renderField)}
+          </div>
+        )
+      })}
+      {(grouped.get('advanced')?.length ?? 0) > 0 && (
+        <details>
+          <summary class="text-xs font-bold uppercase tracking-wider text-lc-muted cursor-pointer select-none hover:text-lc-white">
+            Advanced
+          </summary>
+          <div class="mt-1">{grouped.get('advanced')!.map(renderField)}</div>
+        </details>
+      )}
     </Section>
   )
 }
