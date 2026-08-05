@@ -122,7 +122,7 @@ export function buildPrompt({ name, prefix, description, relays, groups, kind = 
       description || '(no description — leave the default behavior)',
       `"""`,
       ``,
-      `Read docs/agents.md and lib/agent-bot.mjs first. If the description fits the stock runtime, only refine ${prefix}_SYSTEM_PROMPT in .env.local (never print ${prefix}_NSEC or any *_LLM_API_KEY). If it needs extra behaviors (commands, scraping, scheduled posts), extend bots/${name}.mjs alongside runAgent() reusing lib/ helpers. Validate with node --check, foreground-test briefly, then pm2 restart obelisk-${name}. Do not touch other bots. Do not commit.`,
+      `Read docs/agents.md and lib/agent-bot.mjs first. If the description fits the stock runtime, only refine ${prefix}_SYSTEM_PROMPT in .env.local (never print ${prefix}_NSEC or any *_LLM_API_KEY). If it needs extra behaviors (commands, scraping, scheduled posts), extend bots/${name}.mjs alongside runAgent() reusing lib/ helpers. Validate with node --check and a brief foreground test; the admin starts it from the panel afterwards (pm2 is not reachable from your sandbox). Do not touch other bots. Do not commit.`,
     ].join('\n');
   }
   return [
@@ -144,7 +144,7 @@ export function buildPrompt({ name, prefix, description, relays, groups, kind = 
     `- external data (scraping / HTTP APIs): plain fetch with a sane interval, timeout and backoff — no new dependencies`,
     `- one filter per subscription; track seen event ids; ignore the bot's own events`,
     `- validate with node --check, then a short foreground test run (e.g. timeout 30s node --env-file-if-exists=.env.local bots/${name}.mjs) and confirm it prints "running as npub"`,
-    `- when it works: pm2 restart obelisk-${name}`,
+    `- when it works, note it is ready — the admin starts/restarts it from the panel (pm2 is not reachable from your sandbox)`,
     `Do not touch other bots. Do not commit.`,
   ].join('\n');
 }

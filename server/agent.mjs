@@ -111,6 +111,22 @@ function runPath(id) {
   return path.join(runsDir, `${id}.json`);
 }
 
+// A manager restart orphans any in-flight child; sweep those records so
+// they don't sit in the UI as "running" forever.
+try {
+  for (const f of fs.readdirSync(runsDir)) {
+    if (!f.endsWith('.json')) continue;
+    const p = path.join(runsDir, f);
+    const run = JSON.parse(fs.readFileSync(p, 'utf8'));
+    if (run.status === 'running') {
+      run.status = 'failed';
+      run.finishedAt = Date.now();
+      run.events.push({ type: 'stderr', text: 'run orphaned by a manager restart — start it again' });
+      fs.writeFileSync(p, JSON.stringify(run));
+    }
+  }
+} catch { /* no runs yet */ }
+
 function saveRun(run) {
   fs.mkdirSync(runsDir, { recursive: true });
   fs.writeFileSync(runPath(run.id), JSON.stringify(run));
@@ -159,13 +175,19 @@ export function startRun(prompt) {
     events: [],
   };
   // workspace-write: the agent can edit this repo but nothing outside it.
+  // network_access stays on so it can test bots that call external APIs.
   // Extra flags (e.g. a model override) come from MANAGER_CODEX_ARGS.
   const extra = (process.env.MANAGER_CODEX_ARGS ?? '').split(' ').filter(Boolean);
   const child = spawn('codex', [
-    'exec', '--json', '--sandbox', 'workspace-write', '--cd', repoRoot, ...extra, run.prompt,
+    'exec', '--json', '--sandbox', 'workspace-write',
+    '-c', 'sandbox_workspace_write.network_access=true',
+    '--cd', repoRoot, ...extra, run.prompt,
   ], {
     cwd: repoRoot,
     env: { ...process.env, NO_COLOR: '1' },
+    // stdin MUST be closed: with the default pipe codex waits forever on
+    // "Reading additional input from stdin..." and the run hangs at 0 events.
+    stdio: ['ignore', 'pipe', 'pipe'],
   });
   active.set(id, { child, subscribers: new Set(), run });
 
