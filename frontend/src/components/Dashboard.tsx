@@ -252,7 +252,7 @@ function NewBotWizard({ onClose, onDone }: { onClose: () => void; onDone: () => 
   const [name, setName] = useState('')
   const [kind, setKind] = useState<'bot' | 'agent'>('bot')
   const [description, setDescription] = useState('')
-  const [relays, setRelays] = useState('wss://relay.obelisk.ar')
+  const [relays, setRelays] = useState('wss://public.obelisk.ar')
   const [groups, setGroups] = useState('')
   const [allowed, setAllowed] = useState('')
   const [systemPrompt, setSystemPrompt] = useState('')
@@ -371,7 +371,7 @@ function NewBotWizard({ onClose, onDone }: { onClose: () => void; onDone: () => 
               <span class="text-xs text-lc-muted block mb-1">
                 Groups (<span class="font-mono">wss://relay|id</span>, find ids in Settings)
               </span>
-              <input class="lc-input font-mono text-xs" placeholder="wss://relay.obelisk.ar|abc123"
+              <input class="lc-input font-mono text-xs" placeholder="wss://public.obelisk.ar|abc123"
                 value={groups} onInput={(e) => setGroups((e.target as HTMLInputElement).value)} />
             </label>
           </div>

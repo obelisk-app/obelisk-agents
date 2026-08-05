@@ -19,8 +19,8 @@ the nsec to disk — you copy it into `.env.local` yourself, e.g.:
 
 ```
 WELCOME_BOT_NSEC=nsec1...
-WELCOME_BOT_GROUPS=wss://relay.obelisk.ar|<groupId>
-WELCOME_BOT_RELAYS=wss://relay.obelisk.ar
+WELCOME_BOT_GROUPS=wss://public.obelisk.ar|<groupId>
+WELCOME_BOT_RELAYS=wss://public.obelisk.ar
 ```
 
 Convention: per-bot env vars use the bot name in `SCREAMING_SNAKE`
@@ -78,7 +78,7 @@ npm run set-profile -- --nsec-env=WELCOME_BOT_NSEC
 ```
 
 Default relays: `BOT_RELAYS` if set, else
-`relay.obelisk.ar + damus + nostr.band + nos.lol + primal + purplepag.es`.
+`public.obelisk.ar + damus + nostr.band + nos.lol + primal + purplepag.es`.
 Set `BOT_RELAYS` if your bot's profile should be visible globally.
 
 To clear a field, set it to an empty string in stdin JSON:
@@ -94,7 +94,7 @@ field.)
 
 NIP-29 grants permission via **kind 9000** with role tags. Roles are
 free-form strings agreed between admins and the relay; the convention on
-`relay.obelisk.ar` is:
+`public.obelisk.ar` is:
 
 | Role | Powers |
 |---|---|
@@ -107,7 +107,7 @@ nsec — you cannot promote a bot using its own keys.
 
 ```bash
 ADMIN_NSEC=<your-admin-nsec> \
-TARGET_GROUP="wss://relay.obelisk.ar|<groupId>" \
+TARGET_GROUP="wss://public.obelisk.ar|<groupId>" \
 TARGET_PUBKEY=<bot npub or hex> \
 TARGET_ROLES=admin,welcomer \
   npm run grant-admin

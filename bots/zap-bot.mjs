@@ -14,7 +14,7 @@
 // How a zap reaches the group
 //   1. Alice's NIP-29-aware client builds a kind 9734 zap request whose
 //      tags include ["h", groupId] alongside ["p", bobHex], ["e", msgId],
-//      ["amount", millisats], ["relays", "wss://relay.obelisk.ar", ...].
+//      ["amount", millisats], ["relays", "wss://public.obelisk.ar", ...].
 //   2. Alice's wallet pays the bolt11.
 //   3. Some clients publish a group-local kind 7 "⚡" reaction with h/e/p
 //      tags plus bolt11 or amount metadata. Some LNURL providers publish a
@@ -42,7 +42,7 @@ const MIN_SATS = Math.max(0, Number(process.env.ZAP_BOT_MIN_SATS) || 1);
 const TEMPLATE = process.env.ZAP_BOT_TEMPLATE
   || '⚡ ${sender} sent ${amount} ${unit} to ${recipient}';
 
-const RELAYS = (process.env.ZAP_BOT_RELAYS || process.env.BOT_RELAYS || 'wss://relay.obelisk.ar')
+const RELAYS = (process.env.ZAP_BOT_RELAYS || process.env.BOT_RELAYS || 'wss://public.obelisk.ar')
   .split(',').map((s) => s.trim()).filter(Boolean);
 
 const STATIC_GROUPS = parseGroupList(process.env.ZAP_BOT_GROUPS || process.env.BOT_GROUPS);

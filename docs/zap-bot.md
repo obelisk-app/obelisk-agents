@@ -21,7 +21,7 @@ Inspired by the Telegram **LN Zap Bot**.
 
 1. Alice's NIP-29-aware client builds a kind 9734 **zap request** whose
    tags include `["h", groupId]` alongside `["p", bobHex]`, `["e", msgId]`,
-   `["amount", millisats]`, `["relays", "wss://relay.obelisk.ar", …]`.
+   `["amount", millisats]`, `["relays", "wss://public.obelisk.ar", …]`.
 2. Alice's wallet pays the bolt11 it gets back from Bob's LNURL provider.
 3. Clients such as 0xchat may publish an in-group **kind 7 `⚡` reaction**
    with `h`, `e`, `p`, and amount or `bolt11` metadata. LNURL providers
@@ -61,7 +61,7 @@ identity across bots.
 | Variable | Required | Default | Notes |
 |---|---|---|---|
 | `ZAP_BOT_NSEC` | yes | — | nsec1... or 64-char hex. |
-| `ZAP_BOT_RELAYS` | no | `BOT_RELAYS` or `wss://relay.obelisk.ar` | used for kind:0 lookups. |
+| `ZAP_BOT_RELAYS` | no | `BOT_RELAYS` or `wss://public.obelisk.ar` | used for kind:0 lookups. |
 | `ZAP_BOT_GROUPS` | no | `BOT_GROUPS` or empty | static `relayUrl|groupId` seeds — always watched. |
 | `ZAP_BOT_LISTEN_RELAYS` | no | empty | relays to scan via kind 39000 and auto-subscribe to every open group on. Refreshed every `ZAP_BOT_REFRESH_MS`. |
 | `ZAP_BOT_REFRESH_MS` | no | `600000` | discovery refresh cadence (min 60 s). |
@@ -133,13 +133,13 @@ Healthy startup:
 ```
 [zap-bot] env:             ZAP_BOT_NSEC
 [zap-bot] pubkey npub:     npub1…
-[zap-bot] relays:          wss://relay.obelisk.ar, wss://relay.damus.io
-[zap-bot] static groups:   wss://relay.obelisk.ar|abcdef0123456789
-[zap-bot] listen relays:   wss://relay.obelisk.ar, wss://public.obelisk.ar, wss://lacrypta-relay.obelisk.ar
+[zap-bot] relays:          wss://public.obelisk.ar, wss://relay.damus.io
+[zap-bot] static groups:   wss://public.obelisk.ar|abcdef0123456789
+[zap-bot] listen relays:   wss://public.obelisk.ar, wss://public.obelisk.ar, wss://lacrypta-relay.obelisk.ar
 [zap-bot] refresh:         600000ms;  reconnect base 10000ms
-[zap-bot] +group wss://relay.obelisk.ar abcdef01 (💬 chat-general)
-[zap-bot] join-request sent: wss://relay.obelisk.ar abcdef01
-[zap-bot] hello sent: wss://relay.obelisk.ar abcdef01
+[zap-bot] +group wss://public.obelisk.ar abcdef01 (💬 chat-general)
+[zap-bot] join-request sent: wss://public.obelisk.ar abcdef01
+[zap-bot] hello sent: wss://public.obelisk.ar abcdef01
 [zap-bot] alive — 51 groups, 0 zap events (0 receipts, 0 reactions), 0 announced, 0 filtered, 0 errors, 0 cached, up 5m
 ```
 
@@ -155,12 +155,12 @@ Same flow as the other bots. As a human admin of the target group:
 
 ```bash
 ADMIN_NSEC=<your admin nsec> \
-TARGET_GROUP="wss://relay.obelisk.ar|<groupId>" \
+TARGET_GROUP="wss://public.obelisk.ar|<groupId>" \
 TARGET_PUBKEY=<bot npub> \
   npm run add-member       # plain member — sufficient for posting kind 9
 ```
 
-Then add `ZAP_BOT_GROUPS=wss://relay.obelisk.ar|<groupId>` to
+Then add `ZAP_BOT_GROUPS=wss://public.obelisk.ar|<groupId>` to
 `.env.local` and `pm2 restart obelisk-zap-bot`.
 
 ## Troubleshooting

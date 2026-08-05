@@ -9,7 +9,7 @@ export const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)
 export const PORT = Number(process.env.MANAGER_PORT) || 3021;
 
 // Sole admin for now: the Obelisk owner npub (same key that owns
-// relay.obelisk.ar). Comma-separated MANAGER_ADMIN_NPUBS overrides.
+// public.obelisk.ar). Comma-separated MANAGER_ADMIN_NPUBS overrides.
 const DEFAULT_ADMIN_NPUBS = [
   'npub1m9vsm9d8sy0pevcjhenwm4ny6l37dm2hsg4dnusna43ql3n5305qy4zlg4',
 ];

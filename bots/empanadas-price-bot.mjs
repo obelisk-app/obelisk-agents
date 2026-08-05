@@ -21,7 +21,7 @@ const MAX_BACKOFF_MS = Math.max(INTERVAL_MS, Number(
   process.env.EMPANADAS_PRICE_BOT_MAX_BACKOFF_MS || process.env.BOT_MAX_BACKOFF_MS,
 ) || 24 * 60 * 60_000);
 const RELAYS = (process.env.EMPANADAS_PRICE_BOT_RELAYS || process.env.BOT_RELAYS
-  || 'wss://relay.obelisk.ar').split(',').map((s) => s.trim()).filter(Boolean);
+  || 'wss://public.obelisk.ar').split(',').map((s) => s.trim()).filter(Boolean);
 const GROUPS = parseGroupList(process.env.EMPANADAS_PRICE_BOT_GROUPS || process.env.BOT_GROUPS);
 
 function findMenuItem(value) {

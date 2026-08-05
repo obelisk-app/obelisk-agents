@@ -56,6 +56,33 @@ function botKind(scriptPath) {
   }
 }
 
+// Chat commands: declared in bots/<name>.commands.json (written at birth by
+// Codex or by hand); falls back to scanning the source for !words so
+// undeclared commands still show up, just without descriptions.
+function commandsFor(scriptPath) {
+  const manifest = path.join(repoRoot, scriptPath.replace(/\.mjs$/, '.commands.json'));
+  try {
+    const parsed = JSON.parse(fs.readFileSync(manifest, 'utf8'));
+    const list = Array.isArray(parsed) ? parsed : parsed.commands;
+    if (Array.isArray(list)) {
+      return list
+        .filter((c) => c && c.command)
+        .map((c) => ({
+          command: String(c.command),
+          description: c.description ? String(c.description) : null,
+          example: c.example ? String(c.example) : null,
+        }));
+    }
+  } catch { /* no manifest — scan the source */ }
+  try {
+    const src = fs.readFileSync(path.join(repoRoot, scriptPath), 'utf8');
+    const found = [...new Set([...src.matchAll(/!([a-z][a-z0-9_-]{1,20})\b/g)].map((m) => `!${m[1]}`))];
+    return found.map((command) => ({ command, description: null, example: null }));
+  } catch {
+    return [];
+  }
+}
+
 export async function botsOverview() {
   const env = readEnvMap();
   const entries = readEnvEntries();
@@ -67,6 +94,7 @@ export async function botsOverview() {
     return {
       ...proc,
       kind: botKind(app.script),
+      commands: commandsFor(app.script),
       nsecEnv,
       ...identityFor(nsecEnv, env),
       envVars: vars.map((key) => entries.find((e) => e.key === key)
@@ -122,7 +150,7 @@ export function buildPrompt({ name, prefix, description, relays, groups, kind = 
       description || '(no description — leave the default behavior)',
       `"""`,
       ``,
-      `Read docs/agents.md and lib/agent-bot.mjs first. If the description fits the stock runtime, only refine ${prefix}_SYSTEM_PROMPT in .env.local (never print ${prefix}_NSEC or any *_LLM_API_KEY). If it needs extra behaviors (commands, scraping, scheduled posts), extend bots/${name}.mjs alongside runAgent() reusing lib/ helpers. Validate with node --check and a brief foreground test; the admin starts it from the panel afterwards (pm2 is not reachable from your sandbox). Do not touch other bots. Do not commit.`,
+      `Read docs/agents.md and lib/agent-bot.mjs first. If the description fits the stock runtime, only refine ${prefix}_SYSTEM_PROMPT in .env.local (never print ${prefix}_NSEC or any *_LLM_API_KEY). If it needs extra behaviors (commands, scraping, scheduled posts), extend bots/${name}.mjs alongside runAgent() reusing lib/ helpers, and record any ! commands you add in bots/${name}.commands.json ({"commands":[{"command","description","example"}]}) — the panel shows it to the admin. Validate with node --check and a brief foreground test; the admin starts it from the panel afterwards (pm2 is not reachable from your sandbox). Do not touch other bots. Do not commit.`,
     ].join('\n');
   }
   return [
@@ -130,7 +158,7 @@ export function buildPrompt({ name, prefix, description, relays, groups, kind = 
     ``,
     `Bot file: bots/${name}.mjs (PM2 app "obelisk-${name}").`,
     `Identity: env var ${prefix}_NSEC — already in .env.local. NEVER print or move it.`,
-    relays?.length ? `Relays (${prefix}_RELAYS, already set): ${relays.join(', ')}` : `Relays: ${prefix}_RELAYS not set — default is wss://relay.obelisk.ar.`,
+    relays?.length ? `Relays (${prefix}_RELAYS, already set): ${relays.join(', ')}` : `Relays: ${prefix}_RELAYS not set — default is wss://public.obelisk.ar.`,
     groups?.length ? `Groups (${prefix}_GROUPS, already set): ${groups.join(', ')}` : `Groups: ${prefix}_GROUPS not set yet.`,
     ``,
     `What the admin wants this bot to do:`,
@@ -145,6 +173,9 @@ export function buildPrompt({ name, prefix, description, relays, groups, kind = 
     `- one filter per subscription; track seen event ids; ignore the bot's own events`,
     `- validate with node --check, then a short foreground test run (e.g. timeout 30s node --env-file-if-exists=.env.local bots/${name}.mjs) and confirm it prints "running as npub"`,
     `- when it works, note it is ready — the admin starts/restarts it from the panel (pm2 is not reachable from your sandbox)`,
+    `- REQUIRED: write bots/${name}.commands.json describing every chat command the bot answers:`,
+    `  {"commands": [{"command": "!x", "description": "what it does / triggers", "example": "!x arg"}]}`,
+    `  (empty "commands" array + a "note" field if the bot has no commands). The panel shows this to the admin.`,
     `Do not touch other bots. Do not commit.`,
   ].join('\n');
 }
@@ -219,6 +250,10 @@ export async function removeBot(name) {
     archivedTo = path.join(trashDir, `${path.basename(app.script)}.${Date.now()}`);
     fs.renameSync(scriptPath, archivedTo);
   }
+  const manifestPath = scriptPath.replace(/\.mjs$/, '.commands.json');
+  if (fs.existsSync(manifestPath)) {
+    fs.renameSync(manifestPath, path.join(trashDir, `${path.basename(manifestPath)}.${Date.now()}`));
+  }
 
   const prefix = envPrefix(app.script);
   const keys = Object.keys(readEnvMap()).filter((k) => k.startsWith(`${prefix}_`));
@@ -239,7 +274,7 @@ function botSecret(name) {
   return { sk, pk: getPublicKey(sk), nsecEnv };
 }
 
-const PROFILE_RELAYS = ['wss://relay.obelisk.ar', 'wss://relay.damus.io', 'wss://purplepag.es', 'wss://relay.nostr.band'];
+const PROFILE_RELAYS = ['wss://public.obelisk.ar', 'wss://relay.damus.io', 'wss://purplepag.es', 'wss://relay.nostr.band'];
 
 async function fetchProfile(name) {
   const { sk, pk } = botSecret(name);

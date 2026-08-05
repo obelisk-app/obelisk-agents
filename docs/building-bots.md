@@ -42,7 +42,7 @@ PROFILE_NAME="WelcomeBot" PROFILE_ABOUT="Greets newcomers" \
   npm run set-profile -- --nsec-env=WELCOME_BOT_NSEC
 
 # 6. (human admin, once) admit the bot into groups:
-ADMIN_NSEC=<admin nsec> TARGET_GROUP="wss://relay.obelisk.ar|<groupId>" \
+ADMIN_NSEC=<admin nsec> TARGET_GROUP="wss://public.obelisk.ar|<groupId>" \
 TARGET_PUBKEY=<bot npub> npm run add-member
 ```
 
@@ -62,7 +62,7 @@ bot's own prefix and a `BOT_*` fallback:
 
 ```js
 const RELAYS = (process.env.WELCOME_BOT_RELAYS || process.env.BOT_RELAYS
-  || 'wss://relay.obelisk.ar').split(',').map(s => s.trim()).filter(Boolean);
+  || 'wss://public.obelisk.ar').split(',').map(s => s.trim()).filter(Boolean);
 ```
 
 Conventions:
@@ -90,7 +90,7 @@ console.log(`[welcome-bot] running as ${npub}`);
 ```
 
 `createPool(sk)` answers relay AUTH challenges automatically — closed
-relays (like relay.obelisk.ar) demand it before accepting REQ or EVENT.
+relays (like public.obelisk.ar) demand it before accepting REQ or EVENT.
 
 ### Reading (subscriptions)
 
@@ -213,7 +213,7 @@ outside git.
 | read logs | `pm2 logs obelisk-<name> --lines 50` |
 | change display name / about | `npm run set-profile -- --nsec-env=<NAME>_NSEC` (env or stdin JSON) |
 | upload an avatar picture | manager UI → bot → Profile → Upload: the server signs a Blossom upload (kind 24242) with the bot key and publishes the merged kind 0 |
-| find a group id | `npm run list-groups -- wss://relay.obelisk.ar "name"` |
+| find a group id | `npm run list-groups -- wss://public.obelisk.ar "name"` |
 | check what a relay stored | `tools/show-profile.mjs`, `tools/inspect-events.mjs` |
 | test a zap end-to-end | `tools/simulate-zap.mjs` |
 

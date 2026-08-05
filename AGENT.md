@@ -65,7 +65,7 @@ pipe JSON on stdin: `echo '{"about":""}' | npm run set-profile`.
 
 ```bash
 ADMIN_NSEC=<your personal admin nsec> \
-TARGET_GROUP="wss://relay.obelisk.ar|<groupId>" \
+TARGET_GROUP="wss://public.obelisk.ar|<groupId>" \
 TARGET_PUBKEY=<bot npub or hex> \
 TARGET_ROLES=admin \
   npm run grant-admin
@@ -83,7 +83,7 @@ ADMIN_NSEC=… TARGET_GROUP=… TARGET_PUBKEY=… npm run grant-admin -- --remov
 ### Discover a group id from a name
 
 ```bash
-npm run list-groups -- wss://relay.obelisk.ar "general"
+npm run list-groups -- wss://public.obelisk.ar "general"
 ```
 
 Output is `<id>  [open|closed/public|private]  <name>`. Drop the id into
@@ -107,7 +107,7 @@ node --env-file-if-exists=.env.local --input-type=module -e '
       tags: [["h", "<groupId>"]],
       content: "ad-hoc message",
     }, sk);
-    await Promise.any(pool.publish(["wss://relay.obelisk.ar"], ev));
+    await Promise.any(pool.publish(["wss://public.obelisk.ar"], ev));
     process.exit(0);
   });
 '

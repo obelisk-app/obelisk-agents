@@ -85,7 +85,7 @@ import { identityFromEnv } from '../lib/secret.mjs';
 import { createPool, parseGroupList } from '../lib/pool.mjs';
 
 const { sk, pk, npub } = identityFromEnv(process.env.${ENV}_NSEC ? '${ENV}_NSEC' : 'BOT_NSEC');
-const RELAYS = (process.env.${ENV}_RELAYS || process.env.BOT_RELAYS || 'wss://relay.obelisk.ar')
+const RELAYS = (process.env.${ENV}_RELAYS || process.env.BOT_RELAYS || 'wss://public.obelisk.ar')
   .split(',').map(s => s.trim()).filter(Boolean);
 const GROUPS = parseGroupList(process.env.${ENV}_GROUPS || process.env.BOT_GROUPS);
 
@@ -128,6 +128,14 @@ process.on('SIGTERM', () => process.exit(0));
 `;
 
 fs.writeFileSync(filePath, template);
+
+// Starter commands manifest — the panel reads this to show admins what the
+// bot answers to. Update it whenever commands change.
+const manifestPath = filePath.replace(/\.mjs$/, '.commands.json');
+const manifest = isAgent
+  ? { commands: [], note: 'Agent — replies when mentioned (or to every whitelisted message with TRIGGER=all); no ! commands by default.' }
+  : { commands: [{ command: '!ping', description: "Scaffold-template echo — replies 'pong'", example: '!ping' }] };
+fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
 
 console.log(`\nCreated bots/${name}.mjs`);
 console.log('\n┌─ Bot identity (save somewhere safe) ─────────────────────');

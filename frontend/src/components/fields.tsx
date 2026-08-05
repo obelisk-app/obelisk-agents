@@ -226,7 +226,7 @@ function GroupPicker({ value, relaysHint, onChange }: FieldProps) {
       <details class="text-xs text-lc-muted">
         <summary class="cursor-pointer select-none hover:text-lc-white">add by id instead</summary>
         <div class="flex gap-2 mt-2">
-          <input class="lc-input font-mono text-xs" placeholder="wss://relay.obelisk.ar|groupId"
+          <input class="lc-input font-mono text-xs" placeholder="wss://public.obelisk.ar|groupId"
             value={manual} onInput={(e) => setManual((e.target as HTMLInputElement).value)} />
           <button type="button" class="lc-pill-secondary text-xs" onClick={() => {
             if (manual.includes('|')) { toggle(manual.trim()); setManual('') }

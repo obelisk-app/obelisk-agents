@@ -7,9 +7,16 @@ export interface EnvEntry {
   set?: boolean
 }
 
+export interface BotCommand {
+  command: string
+  description: string | null
+  example: string | null
+}
+
 export interface Bot {
   name: string
   kind: 'bot' | 'agent'
+  commands: BotCommand[]
   script: string
   status: string
   pid: number | null

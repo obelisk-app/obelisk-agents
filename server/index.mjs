@@ -107,7 +107,7 @@ route('PUT', /^\/api\/env$/, (req, res, m, body) => {
 
 // ── Relay tools ─────────────────────────────────────────────────────────
 route('GET', /^\/api\/groups$/, async (req, res, m, body, url) =>
-  json(res, 200, await listGroups(url.searchParams.get('relay') || 'wss://relay.obelisk.ar')));
+  json(res, 200, await listGroups(url.searchParams.get('relay') || 'wss://public.obelisk.ar')));
 
 // ── AI operator (Codex) ─────────────────────────────────────────────────
 route('GET', /^\/api\/agent\/status$/, async (req, res) => json(res, 200, await agent.agentStatus()));

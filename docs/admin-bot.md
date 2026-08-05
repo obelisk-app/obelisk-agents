@@ -26,7 +26,7 @@ can publish:
 | 9007 | `create-group` (only matters for first-of-kind) | admin |
 
 Roles are free-form strings agreed between admins and the relay
-(`admin`, `mod`, `welcomer`, …). Convention on `relay.obelisk.ar` is
+(`admin`, `mod`, `welcomer`, …). Convention on `public.obelisk.ar` is
 `admin` = full powers, `mod` = remove + delete only.
 
 ## Skeleton
@@ -38,7 +38,7 @@ import { useWebSocketImplementation } from 'nostr-tools/pool';
 import WebSocket from 'ws';
 useWebSocketImplementation(WebSocket);
 
-const RELAY = 'wss://relay.obelisk.ar';
+const RELAY = 'wss://public.obelisk.ar';
 const GROUP = process.env.ADMIN_BOT_GROUP_ID;
 const sk = nip19.decode(process.env.ADMIN_BOT_NSEC).data;
 const pk = getPublicKey(sk);
@@ -151,4 +151,4 @@ unless you've stored the bot's nsec somewhere recoverable.
   them.
 - **Publishing kind 9003 (delete) for events from other relays.** NIP-29
   delete is per-relay; if the message reached a wider audience, deleting
-  from `relay.obelisk.ar` only hides it locally.
+  from `public.obelisk.ar` only hides it locally.

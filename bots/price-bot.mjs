@@ -14,11 +14,11 @@
 // Configuration (env, typically `.env.local`):
 //   BOT_NSEC          required. nsec1... or 64-char hex.
 //   BOT_RELAYS        comma-separated relay URLs for kind:0 broadcast.
-//                     default: wss://relay.obelisk.ar
+//                     default: wss://public.obelisk.ar
 //   BOT_GROUPS        comma-separated `relayUrl|groupId` pairs the bot posts
 //                     chat into and listens for slash-commands on.
 //                     default: <empty> (bot is profile-only)
-//                     example: wss://relay.obelisk.ar|dab35d8ad892da76,wss://public.obelisk.ar|deadbeef1234
+//                     example: wss://public.obelisk.ar|dab35d8ad892da76,wss://public.obelisk.ar|deadbeef1234
 //   BOT_INTERVAL_MS         default 120000 — price refresh interval.
 //   BOT_CHAT_EVERY_N_TICKS  default 0 (off). If >0, publishes kind 9 summary
 //                           to every configured group every N price-change ticks.
@@ -42,7 +42,7 @@ const INTERVAL = Number(process.env.BOT_INTERVAL_MS) || 120_000;
 const TEMPLATE = process.env.BOT_DISPLAY || 'BTC ${price}';
 const CHAT_EVERY_N = Math.max(0, Number(process.env.BOT_CHAT_EVERY_N_TICKS) || 0);
 
-const RELAYS = (process.env.BOT_RELAYS || 'wss://relay.obelisk.ar')
+const RELAYS = (process.env.BOT_RELAYS || 'wss://public.obelisk.ar')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
@@ -124,7 +124,7 @@ async function main() {
   // to known commands. Uses an in-memory `seen` set so re-deliveries on
   // reconnect don't re-trigger.
   const seen = new Set();
-  // relay29 (relay.obelisk.ar / public.obelisk.ar) closes REQs after EOSE
+  // relay29 (public.obelisk.ar / public.obelisk.ar) closes REQs after EOSE
   // instead of streaming live events — reconnect on every onclose.
   const subscribeListener = (relay, groupId) => {
     let since = Math.floor(Date.now() / 1000) - 5;

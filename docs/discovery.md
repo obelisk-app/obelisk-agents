@@ -7,7 +7,7 @@ metadata). Use it to find a group's id when you only know its name.
 ## Usage
 
 ```bash
-# Default relay (wss://relay.obelisk.ar)
+# Default relay (wss://public.obelisk.ar)
 node tools/list-groups.mjs
 
 # Explicit relay
@@ -17,7 +17,7 @@ node tools/list-groups.mjs wss://public.obelisk.ar
 node tools/list-groups.mjs wss://public.obelisk.ar "general"
 
 # Override default 8s timeout
-TIMEOUT_MS=20000 node tools/list-groups.mjs wss://relay.obelisk.ar
+TIMEOUT_MS=20000 node tools/list-groups.mjs wss://public.obelisk.ar
 ```
 
 Output:

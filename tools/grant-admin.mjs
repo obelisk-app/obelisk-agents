@@ -7,7 +7,7 @@
 //
 // Usage:
 //   ADMIN_NSEC=nsec1...                              \
-//   TARGET_GROUP="wss://relay.obelisk.ar|<groupId>"  \
+//   TARGET_GROUP="wss://public.obelisk.ar|<groupId>"  \
 //   TARGET_PUBKEY=<bot npub or hex>                  \
 //   TARGET_ROLES=admin                               \
 //     npm run grant-admin

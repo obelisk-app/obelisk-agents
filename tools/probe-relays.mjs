@@ -10,7 +10,7 @@ const pool = new SimplePool({
 });
 
 const RELAYS = [
-  'wss://relay.obelisk.ar',
+  'wss://public.obelisk.ar',
   'wss://public.obelisk.ar',
   'wss://lacrypta-relay.obelisk.ar',
 ];

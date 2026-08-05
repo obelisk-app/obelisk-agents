@@ -15,7 +15,7 @@ import WebSocket from 'ws';
 
 useWebSocketImplementation(WebSocket);
 
-const RELAY = process.argv[2] || 'wss://relay.obelisk.ar';
+const RELAY = process.argv[2] || 'wss://public.obelisk.ar';
 const FILTER = (process.argv[3] || '').toLowerCase();
 const TIMEOUT_MS = Number(process.env.TIMEOUT_MS) || 8000;
 

@@ -1,0 +1,5 @@
+{
+  "commands": [
+    { "command": "!empanada", "description": "Replies with the current empanada price in Buenos Aires (cached, or fetched fresh from the menu source)", "example": "!empanada" }
+  ]
+}

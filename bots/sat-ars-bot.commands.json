@@ -1,0 +1,10 @@
+{
+  "commands": [
+    { "command": "!sat", "description": "How many ARS one satoshi is worth (via yadio.io)", "example": "!sat" },
+    { "command": "!sats", "description": "Same as !sat", "example": "!sats" },
+    { "command": "!btc", "description": "BTC price in ARS", "example": "!btc" },
+    { "command": "!ars", "description": "How many sats one Argentine peso buys", "example": "!ars" },
+    { "command": "!stats", "description": "Full sat/ARS/USD conversion table", "example": "!stats" },
+    { "command": "!help", "description": "Lists the bot's commands in chat", "example": "!help" }
+  ]
+}

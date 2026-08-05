@@ -1,0 +1,9 @@
+{
+  "commands": [
+    { "command": "!btc", "description": "Current BTC/USD price with 24h change", "example": "!btc" },
+    { "command": "!price", "description": "Same as !btc — current BTC/USD price", "example": "!price" },
+    { "command": "!ath", "description": "All-time-high price and how far we are from it", "example": "!ath" },
+    { "command": "!stats", "description": "Fuller market stats (24h high/low, volume)", "example": "!stats" },
+    { "command": "!help", "description": "Lists the bot's commands in chat", "example": "!help" }
+  ]
+}

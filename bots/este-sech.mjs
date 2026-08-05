@@ -14,7 +14,7 @@ import { identityFromEnv } from '../lib/secret.mjs';
 import { createPool, parseGroupList } from '../lib/pool.mjs';
 
 const { sk, pk, npub } = identityFromEnv(process.env.ESTE_SECH_NSEC ? 'ESTE_SECH_NSEC' : 'BOT_NSEC');
-const RELAYS = (process.env.ESTE_SECH_RELAYS || process.env.BOT_RELAYS || 'wss://relay.obelisk.ar')
+const RELAYS = (process.env.ESTE_SECH_RELAYS || process.env.BOT_RELAYS || 'wss://public.obelisk.ar')
   .split(',').map(s => s.trim()).filter(Boolean);
 const GROUPS = parseGroupList(process.env.ESTE_SECH_GROUPS || process.env.BOT_GROUPS);
 

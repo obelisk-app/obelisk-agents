@@ -13,7 +13,7 @@ optionally pushes periodic kind 9 price summaries.
 | 2 | Group hello + join-request | kind 9, 9021 | One-shot per group at startup. Open NIP-29 groups auto-admit on 9021; closed groups require an admin kind 9000 add-user. |
 | 3 | Slash-command listener | kind 9 | Subscribes to chat in each configured group; replies to `!btc`, `!price`, `!ath`, `!stats`, `!help` with fresh CoinGecko data. |
 | 4 | Periodic chat summary | kind 9 | If `BOT_CHAT_EVERY_N_TICKS > 0`, posts a multi-line price/ATH summary to every group every N price-change ticks. |
-| 5 | NIP-42 AUTH | kind 22242 | `automaticallyAuth` callback signs challenges with the bot nsec — required by `relay.obelisk.ar`. |
+| 5 | NIP-42 AUTH | kind 22242 | `automaticallyAuth` callback signs challenges with the bot nsec — required by `public.obelisk.ar`. |
 | 6 | Graceful shutdown | — | SIGINT/SIGTERM exits cleanly so PM2 restarts don't leak sockets. |
 
 ## Configuration
@@ -24,7 +24,7 @@ All via `.env.local` (gitignored, read by PM2 through Node's
 | Variable | Required | Default | Notes |
 |---|---|---|---|
 | `BOT_NSEC` | yes | — | `nsec1...` or 64-char hex. The bot's identity. |
-| `BOT_RELAYS` | no | `wss://relay.obelisk.ar` | Comma-separated. Where kind:0 is broadcast. |
+| `BOT_RELAYS` | no | `wss://public.obelisk.ar` | Comma-separated. Where kind:0 is broadcast. |
 | `BOT_GROUPS` | no | empty | Comma-separated `relayUrl|groupId` pairs. The bot joins, listens, and chats in each. |
 | `BOT_INTERVAL_MS` | no | `120000` | Price-fetch interval, ms. CoinGecko rate-limits ~10/min for the free tier. |
 | `BOT_CHAT_EVERY_N_TICKS` | no | `0` (off) | If >0, post a kind 9 summary every N **price-change** ticks (not wall-clock ticks). |
@@ -85,8 +85,8 @@ startup looks like:
 
 ```
 [price-bot] pubkey npub: npub1...
-[price-bot] relays:      wss://relay.obelisk.ar, wss://public.obelisk.ar
-[price-bot] groups:      wss://relay.obelisk.ar|dab35d..., wss://public.obelisk.ar|26a9cc...
+[price-bot] relays:      wss://public.obelisk.ar, wss://public.obelisk.ar
+[price-bot] groups:      wss://public.obelisk.ar|dab35d..., wss://public.obelisk.ar|26a9cc...
 [price-bot] join-request sent: wss://public.obelisk.ar 26a9cced
 [price-bot] hello sent: wss://public.obelisk.ar 26a9cced
 [price-bot] kind:0 → BTC 78,587 (+0.06% 24h)

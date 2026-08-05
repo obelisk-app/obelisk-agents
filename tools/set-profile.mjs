@@ -13,7 +13,7 @@
 // Identity defaults to BOT_NSEC; override with --nsec-env=NAME to use
 // a different env var (e.g. WELCOME_BOT_NSEC).
 //
-// Relays: BOT_RELAYS (comma-separated). Defaults to wss://relay.obelisk.ar
+// Relays: BOT_RELAYS (comma-separated). Defaults to wss://public.obelisk.ar
 // plus a few public profile relays so the bot is globally resolvable.
 
 import { finalizeEvent } from 'nostr-tools';
@@ -55,7 +55,7 @@ if (Object.keys(profile).length === 0) {
 }
 
 const RELAYS = (process.env.BOT_RELAYS ||
-  'wss://relay.obelisk.ar,wss://relay.damus.io,wss://relay.nostr.band,wss://nos.lol,wss://relay.primal.net,wss://purplepag.es')
+  'wss://public.obelisk.ar,wss://relay.damus.io,wss://relay.nostr.band,wss://nos.lol,wss://relay.primal.net,wss://purplepag.es')
   .split(',').map((s) => s.trim()).filter(Boolean);
 
 const { sk, pk, npub } = identityFromEnv(envName);

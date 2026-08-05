@@ -47,11 +47,48 @@ export function BotDetail({ name }: { name: string; path?: string }) {
       <Flash kind="err" text={error} />
       <Flash kind="ok" text={flash} />
 
+      <CommandsSection bot={bot} />
       <EnvSection bot={bot} onSaved={(msg) => { setFlash(msg); refresh() }} onError={setError} />
       <ProfileSection bot={bot} onDone={setFlash} onError={setError} />
       <LogsSection name={bot.name} />
       <DangerZone bot={bot} />
     </div>
+  )
+}
+
+// ── Chat commands (from bots/<name>.commands.json, written at birth) ────
+function CommandsSection({ bot }: { bot: Bot }) {
+  return (
+    <Section title="Chat commands">
+      {bot.commands.length === 0 ? (
+        <p class="text-sm text-lc-muted">
+          {bot.kind === 'agent'
+            ? 'No ! commands — this agent replies when mentioned (its npub or @name), or to every whitelisted message if "Replies to" is set to all.'
+            : 'This bot has no chat commands — it acts on its own (announcements, tickers).'}
+        </p>
+      ) : (
+        <div class="space-y-2">
+          {bot.commands.map((c) => (
+            <div key={c.command} class="flex items-baseline gap-3 flex-wrap">
+              <code class="text-lc-green bg-lc-olive-dark/50 rounded px-2 py-0.5 text-sm font-semibold whitespace-nowrap">
+                {c.command}
+              </code>
+              <span class="text-sm text-lc-muted flex-1 min-w-[200px]">
+                {c.description ?? 'found in the code — no description yet (add it to the bot\'s .commands.json)'}
+              </span>
+              {c.example && c.example !== c.command && (
+                <code class="text-[11px] text-lc-muted/70">{c.example}</code>
+              )}
+            </div>
+          ))}
+          <p class="text-[11px] text-lc-muted/60 pt-2 border-t border-lc-border/60">
+            Type a command as a chat message in any group this bot is in. Declared in{' '}
+            <code>{bot.script.replace('.mjs', '.commands.json')}</code> — kept current by Codex when
+            it builds or edits the bot, or edit it by hand.
+          </p>
+        </div>
+      )}
+    </Section>
   )
 }
 
@@ -145,7 +182,7 @@ function EnvSection({ bot, onSaved, onError }: {
 
   const valueOf = (entry: EnvEntry) => edits[entry.key] ?? (entry.secret ? '' : entry.value ?? '')
   const relaysEntry = bot.envVars.find((e) => /_RELAYS$/.test(e.key) && !/_LISTEN_RELAYS$/.test(e.key))
-  const relaysHint = (relaysEntry && valueOf(relaysEntry)) || 'wss://relay.obelisk.ar'
+  const relaysHint = (relaysEntry && valueOf(relaysEntry)) || 'wss://public.obelisk.ar'
 
   const grouped = new Map<SettingsSection, EnvEntry[]>()
   for (const entry of bot.envVars) {

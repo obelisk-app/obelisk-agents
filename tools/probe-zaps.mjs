@@ -13,7 +13,7 @@ const HOURS = Number(process.argv[2] || 24);
 const SINCE = Math.floor(Date.now() / 1000) - HOURS * 3600;
 const RELAYS = process.argv.slice(3).length
   ? process.argv.slice(3)
-  : ['wss://relay.obelisk.ar', 'wss://public.obelisk.ar', 'wss://lacrypta-relay.obelisk.ar'];
+  : ['wss://public.obelisk.ar', 'wss://public.obelisk.ar', 'wss://lacrypta-relay.obelisk.ar'];
 
 const sk = parseSecret(process.env.ZAP_BOT_NSEC);
 const pool = createPool(sk);

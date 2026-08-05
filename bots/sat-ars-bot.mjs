@@ -15,7 +15,7 @@
 //
 //   SAT_ARS_BOT_NSEC          required. nsec1... or 64-char hex.
 //   SAT_ARS_BOT_RELAYS        comma-separated relay URLs for kind:0 broadcast.
-//                             default: BOT_RELAYS or wss://relay.obelisk.ar
+//                             default: BOT_RELAYS or wss://public.obelisk.ar
 //   SAT_ARS_BOT_GROUPS        comma-separated `relayUrl|groupId` pairs.
 //                             default: empty (profile-only)
 //   SAT_ARS_BOT_INTERVAL_MS   default 60000 — yadio refreshes more often than coingecko.
@@ -40,7 +40,7 @@ const INTERVAL = Number(process.env.SAT_ARS_BOT_INTERVAL_MS || process.env.BOT_I
 const TEMPLATE = process.env.SAT_ARS_BOT_DISPLAY || process.env.BOT_DISPLAY_SAT_ARS || 'sat ${price} ARS';
 const CHAT_EVERY_N = Math.max(0, Number(process.env.SAT_ARS_BOT_CHAT_EVERY_N_TICKS) || 0);
 
-const RELAYS = (process.env.SAT_ARS_BOT_RELAYS || process.env.BOT_RELAYS || 'wss://relay.obelisk.ar')
+const RELAYS = (process.env.SAT_ARS_BOT_RELAYS || process.env.BOT_RELAYS || 'wss://public.obelisk.ar')
   .split(',').map((s) => s.trim()).filter(Boolean);
 
 const GROUPS = parseGroupList(process.env.SAT_ARS_BOT_GROUPS || process.env.BOT_GROUPS);

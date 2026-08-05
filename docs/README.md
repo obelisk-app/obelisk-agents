@@ -1,7 +1,7 @@
 # Obelisk Bots
 
 Obelisk has no backend — bots are plain Nostr clients that hold an nsec, talk
-directly to `wss://relay.obelisk.ar`, and publish events. They are processes,
+directly to `wss://public.obelisk.ar`, and publish events. They are processes,
 not platform features. Each bot is a single Node script under `bots/` and a
 PM2 entry that keeps it running.
 
@@ -32,7 +32,7 @@ with the admin role attached on top.
   `OBELISK_BOTS_STATE_DIR` or per-bot `*_STATE_PATH` variables to override it.
 - **Supervisor**: PM2. Each bot is its own PM2 process so it can be restarted,
   logged, and monitored independently of the Next.js app.
-- **Relay**: `wss://relay.obelisk.ar` for all group/chat events. Public relays
+- **Relay**: `wss://public.obelisk.ar` for all group/chat events. Public relays
   (damus, nostr.band, primal) are appropriate when you specifically want the
   bot's profile to be globally discoverable.
 
@@ -83,13 +83,13 @@ ecosystem.config.js         # PM2 process list — one entry per bot
    (`WELCOME_BOT_NSEC`) so multiple bots can run side-by-side, or share
    `BOT_NSEC` if there's only one.
 
-3. **Whitelist the npub on the relay** if `relay.obelisk.ar` enforces an
+3. **Whitelist the npub on the relay** if `public.obelisk.ar` enforces an
    allow-list (it currently does — unsigned/unauth posts are rejected).
 
 4. **Add the bot to the target group** as a human group admin:
    ```bash
    ADMIN_NSEC=<your admin nsec> \
-   TARGET_GROUP="wss://relay.obelisk.ar|<groupId>" \
+   TARGET_GROUP="wss://public.obelisk.ar|<groupId>" \
    TARGET_PUBKEY=<bot npub> \
    TARGET_ROLES=admin \
      npm run grant-admin
@@ -141,7 +141,7 @@ already does this; new bots should follow the same pattern.
   `lastPrice`. If you fork it, keep that pattern — relays accept duplicates
   but clients render churn.
 - **Bot's profile not discoverable globally**: kind:0 published only to
-  `relay.obelisk.ar`. Add public relays to the publish list if external
+  `public.obelisk.ar`. Add public relays to the publish list if external
   visibility matters.
 
 ## Security notes

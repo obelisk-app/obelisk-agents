@@ -95,20 +95,20 @@ automatically — no `dotenv` dependency.
    ```
    (Skip if you already have a `BOT_NSEC` in `.env.local`.)
 
-2. Whitelist the printed npub on `wss://relay.obelisk.ar` if it enforces
+2. Whitelist the printed npub on `wss://public.obelisk.ar` if it enforces
    an allow-list.
 
 3. Add the bot to one or more groups (run as a *human* admin):
    ```bash
    ADMIN_NSEC=<your-admin-nsec> \
-   TARGET_GROUP="wss://relay.obelisk.ar|<groupId>" \
+   TARGET_GROUP="wss://public.obelisk.ar|<groupId>" \
    TARGET_PUBKEY=<bot-npub> \
      npm run add-member
    ```
 
 4. Set `BOT_GROUPS` in `.env.local`:
    ```
-   BOT_GROUPS=wss://relay.obelisk.ar|<groupId>
+   BOT_GROUPS=wss://public.obelisk.ar|<groupId>
    ```
 
 5. Start under PM2:
@@ -140,7 +140,7 @@ admin adds it to a group it's also a member bot).
 - **Secrets**: live in `.env.local` (gitignored, mode 600 recommended).
 - **Supervisor**: PM2. Each bot is its own process so it can be restarted,
   logged, and monitored independently.
-- **Default relay**: `wss://relay.obelisk.ar`. Add public relays to
+- **Default relay**: `wss://public.obelisk.ar`. Add public relays to
   `BOT_RELAYS` only when the bot's profile (kind:0) needs to be globally
   visible.
 - **Filters as struct, not array**: relay29-derived relays reject
@@ -157,7 +157,7 @@ admin adds it to a group it's also a member bot).
 | Restart one bot | `pm2 restart obelisk-price-bot` |
 | Clean up duplicate hello messages | `npm run price-bot:cleanup` |
 | Decode an nsec → npub | `npm run whoami -- BOT_NSEC` |
-| Discover group ids | `npm run list-groups -- wss://relay.obelisk.ar` |
+| Discover group ids | `npm run list-groups -- wss://public.obelisk.ar` |
 
 ## Security notes
 

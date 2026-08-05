@@ -30,7 +30,7 @@ sharing an identity makes them fight over it.
 | Variable | Required | Default | Notes |
 |---|---|---|---|
 | `SAT_ARS_BOT_NSEC` | yes | — | nsec1... or 64-char hex. |
-| `SAT_ARS_BOT_RELAYS` | no | `BOT_RELAYS` or `wss://relay.obelisk.ar` | comma-separated. |
+| `SAT_ARS_BOT_RELAYS` | no | `BOT_RELAYS` or `wss://public.obelisk.ar` | comma-separated. |
 | `SAT_ARS_BOT_GROUPS` | no | `BOT_GROUPS` or empty | `relayUrl|groupId` pairs. |
 | `SAT_ARS_BOT_INTERVAL_MS` | no | `60000` | yadio refreshes ~every 60s; don't go lower. |
 | `SAT_ARS_BOT_DISPLAY` | no | `sat ${price} ARS` | template; `${price}` = ARS per sat to 2 decimals. |
@@ -86,7 +86,7 @@ Healthy startup looks like:
 ```
 [sat-ars-bot] env:         SAT_ARS_BOT_NSEC
 [sat-ars-bot] pubkey npub: npub1...
-[sat-ars-bot] relays:      wss://relay.obelisk.ar, wss://relay.damus.io, ...
+[sat-ars-bot] relays:      wss://public.obelisk.ar, wss://relay.damus.io, ...
 [sat-ars-bot] groups:      (none)
 [sat-ars-bot] interval:    60000ms; chat every 0 ticks
 [sat-ars-bot] kind:0 → sat 1,20 ARS  (BTC $80,000 · USD/ARS 1.498)
@@ -101,7 +101,7 @@ Same flow as price-bot. As a human admin of the target group:
 
 ```bash
 ADMIN_NSEC=<your admin nsec> \
-TARGET_GROUP="wss://relay.obelisk.ar|<groupId>" \
+TARGET_GROUP="wss://public.obelisk.ar|<groupId>" \
 TARGET_PUBKEY=<bot npub> \
   npm run add-member       # plain member, replies to slash-commands
 
@@ -109,5 +109,5 @@ TARGET_PUBKEY=<bot npub> \
 TARGET_ROLES=admin npm run grant-admin
 ```
 
-Then add `SAT_ARS_BOT_GROUPS=wss://relay.obelisk.ar|<groupId>` to
+Then add `SAT_ARS_BOT_GROUPS=wss://public.obelisk.ar|<groupId>` to
 `.env.local` and `pm2 restart obelisk-sat-ars-bot`.

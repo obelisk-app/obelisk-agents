@@ -9,7 +9,7 @@ const sk = parseSecret(process.env.ZAP_BOT_NSEC);
 const pool = createPool(sk);
 
 const RELAYS = [
-  'wss://relay.obelisk.ar',
+  'wss://public.obelisk.ar',
   'wss://public.obelisk.ar',
   'wss://lacrypta-relay.obelisk.ar',
   'wss://relay.damus.io',

@@ -67,7 +67,7 @@ export function Settings(_props: { path?: string }) {
 
   if (!entries) return error ? <Flash kind="err" text={error} /> : <div class="lc-card h-64 lc-skeleton" />
 
-  const relaysHint = valueOf(entryFor('BOT_RELAYS')) || 'wss://relay.obelisk.ar'
+  const relaysHint = valueOf(entryFor('BOT_RELAYS')) || 'wss://public.obelisk.ar'
 
   const field = (key: string, overrides?: { label?: string; help?: string }) => {
     const entry = entryFor(key)
