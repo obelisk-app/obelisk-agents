@@ -45,9 +45,13 @@ function parsePrice(html) {
   return item;
 }
 
+// Rappi bot-walls obviously robotic user agents but serves browser ones.
+const USER_AGENT = process.env.EMPANADAS_PRICE_BOT_USER_AGENT || process.env.BOT_USER_AGENT
+  || 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36';
+
 async function fetchPrice() {
   const response = await fetch(SOURCE_URL, {
-    headers: { 'user-agent': 'ObeliskEmpanadasPriceBot/1.0' },
+    headers: { 'user-agent': USER_AGENT },
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
   if (!response.ok) throw new Error(`source HTTP ${response.status}`);
@@ -142,11 +146,22 @@ async function main() {
           seen.add(event.id);
           if (seen.size > 5_000) seen.delete(seen.values().next().value);
           if (!/^!empanada\b/i.test(event.content.trim())) return;
+          // Never answer a command with silence — if the source is down,
+          // say so (with the stale price when we have one).
+          let reply;
           try {
             const item = state.latest || await fetchPrice();
-            await publish([relay], 9, [['h', groupId], ['e', event.id], ['p', event.pubkey]], summary(item));
+            reply = summary(item);
           } catch (err) {
             console.warn(`[${PREFIX}] command failed:`, err?.message || err);
+            reply = state.latest
+              ? `${summary(state.latest)} (⚠️ precio cacheado — la fuente no responde ahora)`
+              : '🥟 No pude leer el precio ahora mismo — la fuente no responde. Probá de nuevo en un rato.';
+          }
+          try {
+            await publish([relay], 9, [['h', groupId], ['e', event.id], ['p', event.pubkey]], reply);
+          } catch (err) {
+            console.warn(`[${PREFIX}] reply rejected:`, err?.message || err);
           }
         },
       });
