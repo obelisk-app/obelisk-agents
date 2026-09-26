@@ -71,6 +71,26 @@ module.exports = {
       max_restarts: 10,
       env: baseEnv,
     },
+    {
+      name: 'obelisk-asados-bot',
+      script: 'bots/asados-bot.mjs',
+      cwd,
+      node_args: nodeArgs,
+      watch: false,
+      autorestart: true,
+      max_restarts: 10,
+      env: baseEnv,
+    },
+    {
+      name: 'obelisk-lacrypta-ranks',
+      script: 'bots/lacrypta-ranks.mjs',
+      cwd,
+      node_args: nodeArgs,
+      watch: false,
+      autorestart: true,
+      max_restarts: 10,
+      env: baseEnv,
+    },
     // ── Add additional bots here ──
 
     // Management web UI + API (agents.obelisk.ar). Not a bot: it is the

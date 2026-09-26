@@ -1,0 +1,20 @@
+{
+  "commands": [
+    { "command": "!rangos", "description": "Lista de comandos del bot de rangos", "example": "!rangos" },
+    { "command": "!ranking", "description": "Top 10 del ranking quincenal de esta comunidad (relay)", "example": "!ranking" },
+    { "command": "!milugar", "description": "Tu posición, nivel y XP que te falta para el siguiente", "example": "!milugar" },
+    { "command": "!perfil", "description": "Perfil de nivel, XP, padrino y ahijado (tuyo o de otro)", "example": "!perfil nostr:npub1…" },
+    { "command": "!xpinfo", "description": "Cómo se calcula el XP (mensajes, reacciones, zaps), niveles y premios", "example": "!xpinfo" },
+    { "command": "!cierre", "description": "Fecha del próximo cierre del ranking y tiempo restante", "example": "!cierre" },
+    { "command": "!fbi", "description": "Reporte de actividad de un usuario en el ciclo actual", "example": "!fbi nostr:npub1…" },
+    { "command": "!jurado", "description": "Inicia una votación de 24 h para restar % de XP (sin args: lista las activas)", "example": "!jurado nostr:npub1… 25 spam de mensajes" },
+    { "command": "!votar", "description": "Vota en un jurado activo (también: reaccionar 👍/👎 al mensaje del jurado)", "example": "!votar si nostr:npub1…" },
+    { "command": "!ser-padrino", "description": "Crea o edita tu perfil de padrino", "example": "!ser-padrino Dev de Lightning | Construyo en Bitcoin hace 5 años" },
+    { "command": "!obtener-padrino", "description": "Lista padrinos disponibles; con @padrino muestra su perfil; con 'confirmar' lo elige", "example": "!obtener-padrino nostr:npub1… confirmar" },
+    { "command": "!mi-ahijado", "description": "Muestra a quién apadrinaste", "example": "!mi-ahijado" },
+    { "command": "!infopadrino", "description": "Explica el sistema de padrinos", "example": "!infopadrino" },
+    { "command": "!canal-niveles", "description": "(admin) Usa este grupo para anuncios de niveles, Top 3 y cierre; 'off' para desactivar", "example": "!canal-niveles" },
+    { "command": "!reset-niveles", "description": "(admin) Resetea el ranking de esta comunidad", "example": "!reset-niveles" }
+  ],
+  "note": "Earns XP automatically from chat messages, reactions and zaps in every open group on both relays; rankings are per relay."
+}

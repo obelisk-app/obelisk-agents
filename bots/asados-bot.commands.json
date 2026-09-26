@@ -1,0 +1,9 @@
+{
+  "commands": [
+    {
+      "command": "!asado",
+      "description": "Muestra el último precio comprobado por kilo de tapa de asado en DIA Argentina",
+      "example": "!asado"
+    }
+  ]
+}
