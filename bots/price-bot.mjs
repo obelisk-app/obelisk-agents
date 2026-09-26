@@ -253,8 +253,10 @@ async function main() {
           name,
           display_name: name,
           about: summary(s),
-          picture:
-            'https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/1280px-Bitcoin.svg.png',
+          // Republished every price tick, so the avatar lives in env (the
+          // manager's avatar upload sets it) rather than on the relays.
+          picture: process.env.BOT_PICTURE
+            || 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/1280px-Bitcoin.svg.png',
         }),
       },
       sk,

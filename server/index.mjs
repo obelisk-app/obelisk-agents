@@ -14,7 +14,8 @@ import { PORT, repoRoot, distDir } from './config.mjs';
 import { issueChallenge, login, logout, sessionFor, sessionCookie } from './auth.mjs';
 import { readEnvEntries, applyEnvChanges } from './envfile.mjs';
 import { botAction, botLogs } from './pm2.mjs';
-import { botsOverview, scaffoldBot, buildPrompt, publishProfile, listGroups, setAvatar } from './bots.mjs';
+import { botsOverview, scaffoldBot, buildPrompt, publishProfile, currentProfile, listGroups, setAvatar } from './bots.mjs';
+import { profilesFor } from './profiles.mjs';
 import * as agent from './agent.mjs';
 
 const routes = [];
@@ -36,9 +37,11 @@ route('POST', /^\/api\/auth\/login$/, (req, res, m, body) => {
   json(res, 200, { ok: true });
 }, { open: true });
 
-route('GET', /^\/api\/auth\/session$/, (req, res) => {
+route('GET', /^\/api\/auth\/session$/, async (req, res) => {
   const s = sessionFor(req);
-  json(res, 200, s ? { authed: true, npub: s.npub } : { authed: false });
+  if (!s) return json(res, 200, { authed: false });
+  const profiles = await profilesFor([s.pubkey], { wait: true });
+  json(res, 200, { authed: true, npub: s.npub, pubkey: s.pubkey, profile: profiles[s.pubkey] });
 }, { open: true });
 
 route('POST', /^\/api\/auth\/logout$/, (req, res) => {
@@ -103,6 +106,10 @@ route('POST', /^\/api\/bots\/([\w-]+)\/(start|stop|restart)$/, async (req, res, 
 
 route('GET', /^\/api\/bots\/([\w-]+)\/logs$/, async (req, res, m, body, url) =>
   json(res, 200, await botLogs(m[1], { lines: Number(url.searchParams.get('lines')) || 200 })));
+
+// The full current kind 0 (fresh from relays) to prefill the edit form.
+route('GET', /^\/api\/bots\/([\w-]+)\/profile$/, async (req, res, m) =>
+  json(res, 200, await currentProfile(m[1])));
 
 route('POST', /^\/api\/bots\/([\w-]+)\/profile$/, async (req, res, m, body) =>
   json(res, 200, await publishProfile(m[1], body ?? {})));

@@ -2,12 +2,16 @@ import { useEffect, useState } from 'preact/hooks'
 import { route } from 'preact-router'
 import { api, ActivityRun, AgentStatus, Bot, Script } from '../api'
 import { toast } from './toast'
-import { CopyChip, Section, StatusDot, fmtMem, fmtUptime, shortNpub, timeAgo } from './ui'
+import { Avatar, CopyChip, Icon, Section, fmtMem, fmtUptime, profileMissing, profileName, shortNpub, timeAgo } from './ui'
+
+type Filter = 'all' | 'online' | 'stopped' | 'agents'
 
 export function Dashboard(_props: { path?: string }) {
   const [bots, setBots] = useState<Bot[] | null>(null)
   const [busy, setBusy] = useState('')
   const [wizard, setWizard] = useState(false)
+  const [query, setQuery] = useState('')
+  const [filter, setFilter] = useState<Filter>('all')
 
   const refresh = () => api.bots().then(setBots).catch((e) => toast.err(e.message))
 
@@ -31,31 +35,60 @@ export function Dashboard(_props: { path?: string }) {
   }
 
   const online = bots?.filter((b) => b.status === 'online').length ?? 0
+  const agents = bots?.filter((b) => b.kind === 'agent').length ?? 0
+  const restarts = bots?.reduce((n, b) => n + b.restarts, 0) ?? 0
+  const q = query.trim().toLowerCase()
+  const shown = (bots ?? []).filter((b) => {
+    if (filter === 'online' && b.status !== 'online') return false
+    if (filter === 'stopped' && b.status === 'online') return false
+    if (filter === 'agents' && b.kind !== 'agent') return false
+    if (!q) return true
+    return [b.name, b.profile?.name, b.profile?.display_name, b.profile?.about, b.npub]
+      .some((v) => v?.toLowerCase().includes(q))
+  })
 
   return (
     <div class="animate-fade-in-up">
-      <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+      <div class="flex items-end justify-between mb-6 flex-wrap gap-4">
         <div>
-          <h1 class="text-2xl font-extrabold">Bot fleet</h1>
-          <p class="text-sm text-lc-muted mt-0.5">
-            {bots ? (
-              <>
-                <span class={online > 0 ? 'text-lc-green' : ''}>{online} online</span>
-                {' · '}{(bots.length - online)} stopped · {bots.reduce((n, b) => n + b.restarts, 0)} restarts total
-              </>
-            ) : 'loading…'}
-          </p>
+          <p class="text-xs font-bold uppercase tracking-[0.18em] text-lc-green mb-1">Fleet</p>
+          <h1 class="text-3xl font-extrabold tracking-tight">Your bots</h1>
+          <p class="text-sm text-lc-muted mt-1">Every bot runs with its own Nostr identity — this is how they look to the world.</p>
         </div>
-        <button class="lc-pill-primary" onClick={() => setWizard(true)}>+ New bot</button>
+        <button class="lc-pill-primary gap-1.5" onClick={() => setWizard(true)}><Icon.plus /> New bot</button>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <Stat label="Online" value={bots ? online : '—'} accent={online > 0} />
+        <Stat label="Stopped" value={bots ? bots.length - online : '—'} />
+        <Stat label="Agents" value={bots ? agents : '—'} />
+        <Stat label="Restarts" value={bots ? restarts : '—'} />
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3 mb-5">
+        <label class="lc-search flex-1 min-w-[220px]">
+          <Icon.search />
+          <input placeholder="Search by name, profile or npub…" value={query}
+            onInput={(e) => setQuery((e.target as HTMLInputElement).value)} />
+        </label>
+        <div class="lc-seg !w-auto">
+          {(['all', 'online', 'stopped', 'agents'] as Filter[]).map((f) => (
+            <button key={f} class={`!px-4 capitalize ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>{f}</button>
+          ))}
+        </div>
       </div>
 
       {bots === null ? (
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((i) => <div key={i} class="lc-card h-48 lc-skeleton" />)}
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {[1, 2, 3].map((i) => <div key={i} class="lc-card h-60 lc-skeleton" />)}
+        </div>
+      ) : shown.length === 0 ? (
+        <div class="lc-card p-10 text-center text-sm text-lc-muted">
+          {bots.length === 0 ? 'No bots yet — create the first one.' : 'No bots match this filter.'}
         </div>
       ) : (
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {bots.map((bot) => (
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {shown.map((bot) => (
             <BotCard key={bot.name} bot={bot} busy={busy} onAct={act} />
           ))}
         </div>
@@ -65,6 +98,15 @@ export function Dashboard(_props: { path?: string }) {
       <ScriptsInventory />
 
       {wizard && <NewBotWizard onClose={() => setWizard(false)} onDone={refresh} />}
+    </div>
+  )
+}
+
+function Stat({ label, value, accent = false }: { label: string; value: number | string; accent?: boolean }) {
+  return (
+    <div class="lc-stat">
+      <div class="text-[11px] font-bold uppercase tracking-wider text-lc-muted">{label}</div>
+      <div class={`text-2xl font-extrabold mt-1 ${accent ? 'text-lc-green' : ''}`}>{value}</div>
     </div>
   )
 }
@@ -174,7 +216,7 @@ function BotCard({ bot, busy, onAct }: {
 }) {
   const [confirmStop, setConfirmStop] = useState(false)
   const short = bot.name.replace(/^obelisk-/, '')
-  const initials = short.split('-').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
+  const title = profileName(bot.profile, short)
 
   useEffect(() => {
     if (!confirmStop) return
@@ -183,62 +225,68 @@ function BotCard({ bot, busy, onAct }: {
   }, [confirmStop])
 
   return (
-    <div class="lc-card p-5 flex flex-col gap-3 cursor-pointer" onClick={() => route(`/bots/${bot.name}`)}>
-      <div class="flex items-center gap-3">
-        <div class={`lc-monogram ${bot.status !== 'online' ? 'lc-monogram-off' : ''}`}>
-          {bot.kind === 'agent' ? '✦' : initials}
-        </div>
-        <div class="min-w-0">
-          <div class="font-bold truncate flex items-center gap-2">
-            {short}
-            {bot.kind === 'agent' && (
-              <span class="text-[10px] font-bold tracking-wider bg-lc-olive-dark text-lc-green rounded px-1.5 py-0.5">
-                AGENT
-              </span>
-            )}
+    <div class="lc-card lc-bot-card flex flex-col cursor-pointer overflow-hidden" onClick={() => route(`/bots/${bot.name}`)}>
+      <div class="lc-bot-banner" style={bot.profile?.banner ? { backgroundImage: `url("${bot.profile.banner}")` } : undefined} />
+      <div class="px-5 pb-5 flex flex-col gap-3 flex-1">
+        <div class="flex items-end gap-3 -mt-8">
+          <Avatar picture={bot.profile?.picture} label={short} size={64} status={bot.status} />
+          <div class="min-w-0 pb-1 flex-1">
+            <div class="font-bold truncate flex items-center gap-2" title={title}>
+              {title}
+              {bot.kind === 'agent' && <span class="lc-tag">AGENT</span>}
+            </div>
+            <div class="text-xs text-lc-muted truncate">
+              {title !== short && <span class="font-mono">{short} · </span>}
+              <span class={bot.status === 'online' ? 'text-lc-green' : bot.status === 'errored' ? 'text-red-400' : ''}>{bot.status}</span>
+              {bot.status === 'online' && ` · ${fmtUptime(bot.uptime)}`}
+            </div>
           </div>
-          <div class="text-xs text-lc-muted flex items-center gap-1.5">
-            <StatusDot status={bot.status} /> {bot.status} · {fmtUptime(bot.uptime)}
-          </div>
         </div>
-      </div>
 
-      <div class="text-xs text-lc-muted space-y-1" onClick={(e) => e.stopPropagation()}>
-        <div class="flex justify-between">
-          <span>identity</span>
+        <p class="text-sm text-lc-muted line-clamp-2 min-h-[2.5rem]">
+          {bot.profile?.about ?? <span class="italic text-lc-muted/50">No Nostr profile yet — publish one from the bot page.</span>}
+        </p>
+
+        <div class="flex flex-wrap gap-1.5 text-[11px]" onClick={(e) => e.stopPropagation()}>
           {bot.npub
-            ? <CopyChip text={bot.npub} label={shortNpub(bot.npub)} />
-            : <span class="text-red-400">no nsec ({bot.nsecEnv})</span>}
+            ? <span class="lc-chip"><CopyChip text={bot.npub} label={shortNpub(bot.npub)} /></span>
+            : <span class="lc-chip !text-red-400">no nsec ({bot.nsecEnv})</span>}
+          {bot.commands.length > 0 && <span class="lc-chip">{bot.commands.length} command{bot.commands.length === 1 ? '' : 's'}</span>}
+          <span class="lc-chip">{bot.cpu ?? 0}% · {fmtMem(bot.memory)}</span>
+          {bot.restarts > 0 && <span class="lc-chip">↻ {bot.restarts}</span>}
+          {profileMissing(bot.profile) && (
+            <span class="lc-chip !text-yellow-400 !border-yellow-900" title="Relays no longer return this profile — showing the last-known copy. Republish it from the bot page.">
+              ⚠ profile not on relays
+            </span>
+          )}
         </div>
-        <div class="flex justify-between"><span>restarts</span><span>{bot.restarts}</span></div>
-        <div class="flex justify-between"><span>cpu / mem</span><span>{bot.cpu ?? 0}% / {fmtMem(bot.memory)}</span></div>
-      </div>
 
-      {bot.lastLog && (
-        <div class="text-[11px] font-mono text-lc-muted/70 truncate border-t border-lc-border pt-2" title={bot.lastLog}>
-          {bot.lastLog}
-        </div>
-      )}
-
-      <div class="flex gap-2 mt-auto pt-1" onClick={(e) => e.stopPropagation()}>
-        {bot.status === 'online' ? (
-          <>
-            <button class="lc-pill-secondary text-xs !px-3 !py-1.5" disabled={!!busy}
-              onClick={() => onAct(bot.name, 'restart')}>
-              {busy === bot.name + 'restart' ? '…' : 'Restart'}
-            </button>
-            <button class="lc-pill-danger text-xs !px-3 !py-1.5" disabled={!!busy}
-              onClick={() => confirmStop ? onAct(bot.name, 'stop') : setConfirmStop(true)}>
-              {busy === bot.name + 'stop' ? '…' : confirmStop ? 'Sure?' : 'Stop'}
-            </button>
-          </>
-        ) : (
-          <button class="lc-pill-primary text-xs !px-3 !py-1.5" disabled={!!busy}
-            onClick={() => onAct(bot.name, 'start')}>
-            {busy === bot.name + 'start' ? '…' : 'Start'}
-          </button>
+        {bot.lastLog && (
+          <div class="text-[11px] font-mono text-lc-muted/70 truncate bg-lc-black/60 rounded-md px-2 py-1.5" title={bot.lastLog}>
+            {bot.lastLog}
+          </div>
         )}
-        <span class="ml-auto text-xs text-lc-muted self-center">Manage →</span>
+
+        <div class="flex gap-2 mt-auto pt-1 items-center" onClick={(e) => e.stopPropagation()}>
+          {bot.status === 'online' ? (
+            <>
+              <button class="lc-pill-secondary text-xs !px-3 !py-1.5 gap-1" disabled={!!busy}
+                onClick={() => onAct(bot.name, 'restart')}>
+                <Icon.restart /> {busy === bot.name + 'restart' ? '…' : 'Restart'}
+              </button>
+              <button class="lc-pill-danger text-xs !px-3 !py-1.5 gap-1" disabled={!!busy}
+                onClick={() => confirmStop ? onAct(bot.name, 'stop') : setConfirmStop(true)}>
+                <Icon.stop /> {busy === bot.name + 'stop' ? '…' : confirmStop ? 'Sure?' : 'Stop'}
+              </button>
+            </>
+          ) : (
+            <button class="lc-pill-primary text-xs !px-3 !py-1.5 gap-1" disabled={!!busy}
+              onClick={() => onAct(bot.name, 'start')}>
+              <Icon.play /> {busy === bot.name + 'start' ? '…' : 'Start'}
+            </button>
+          )}
+          <span class="ml-auto text-xs text-lc-muted group-hover:text-lc-green">Manage →</span>
+        </div>
       </div>
     </div>
   )

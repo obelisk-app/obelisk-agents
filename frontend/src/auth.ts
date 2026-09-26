@@ -1,107 +1,117 @@
-// Admin login: sign a kind 22242 challenge event (same shape as
-// obelisk-relay's admin panel) with a NIP-07 extension, a NIP-46 remote
-// signer (bunker:// / NIP-05 / nostrconnect QR), or a pasted nsec that
-// never leaves the browser.
-import { finalizeEvent, generateSecretKey, getPublicKey, nip19 } from 'nostr-tools'
-import { BunkerSigner, createNostrConnectURI, parseBunkerInput } from 'nostr-tools/nip46'
+// Admin login plumbing on top of @nostr-wot/signers + @nostr-wot/ui.
+//
+// The manager authenticates exactly like obelisk-relay's admin panel: fetch
+// a challenge, sign a kind 22242 event over it with whatever signer the
+// user picked in the login modal (NIP-07 extension, NIP-46 bunker / QR,
+// or an imported nsec that never leaves the browser), post it back, get a
+// session cookie. Everything signer-related (persistence, restore, the
+// QR pairing) is the SDK's job; this file only covers what's specific to
+// us — the challenge event and recovering from dead NIP-46 sessions.
+import { SIGNER_STORAGE_KEY_NIP46, clearPersistedNip46, clearPersistedNsec } from '@nostr-wot/ui'
+import type { NostrSigner } from '@nostr-wot/signers'
+import { BunkerSigner, parseBunkerInput } from 'nostr-tools/nip46'
+import { nip19 } from 'nostr-tools'
 import { api } from './api'
 
-interface Nip07 {
-  getPublicKey(): Promise<string>
-  signEvent(event: object): Promise<object>
-}
+const SIGNER_TIMEOUT_MS = 30_000
 
-declare global {
-  interface Window {
-    nostr?: Nip07
+// Rendezvous relays for NIP-46: public.obelisk.ar first (both ends can
+// reach it — same choice as obelisk-dex and the relay admin), then big
+// public relays as fallbacks for signers that won't talk to it.
+export const NIP46_RELAYS = [
+  'wss://public.obelisk.ar',
+  'wss://relay.damus.io',
+  'wss://nos.lol',
+  'wss://relay.primal.net',
+]
+
+export const withTimeout = async <T,>(op: Promise<T>, message: string, ms = SIGNER_TIMEOUT_MS): Promise<T> => {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  try {
+    return await Promise.race([
+      op,
+      new Promise<T>((_, reject) => { timer = setTimeout(() => reject(new Error(message)), ms) }),
+    ])
+  } finally {
+    if (timer) clearTimeout(timer)
   }
 }
 
-const template = (challenge: string) => ({
-  kind: 22242,
-  created_at: Math.floor(Date.now() / 1000),
-  tags: [
-    ['relay', window.location.origin.replace(/^http/, 'ws')],
-    ['challenge', challenge],
-  ],
-  content: '',
-})
+async function signChallenge(signer: NostrSigner, challenge: string) {
+  const pubkey = await signer.getPublicKey()
+  return signer.signEvent({
+    kind: 22242,
+    pubkey,
+    created_at: Math.floor(Date.now() / 1000),
+    tags: [
+      ['relay', window.location.origin.replace(/^http/, 'ws')],
+      ['challenge', challenge],
+    ],
+    content: '',
+  } as Parameters<NostrSigner['signEvent']>[0])
+}
 
-const withTimeout = <T,>(p: Promise<T>, message: string, ms = 30000): Promise<T> =>
-  Promise.race([
-    p,
-    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(message)), ms)),
-  ])
-
-async function signChallengeAndLogin(sign: (evt: ReturnType<typeof template>) => Promise<object>) {
+/** One signature → one manager session. */
+export async function authenticate(signer: NostrSigner) {
   const { challenge } = await api.challenge()
-  const event = await sign(template(challenge))
+  let event
+  try {
+    event = await withTimeout(signChallenge(signer, challenge),
+      'Your signer did not respond — approve the request in your Nostr app, or use another signer.')
+  } catch (err) {
+    // A closed NIP-46 connection can't be revived, but the stored pairing
+    // can build a fresh one with the same client key. Retry once.
+    if (!isDeadSignerError(err)) throw err
+    const rebuilt = await restoreNip46Signer()
+    if (!rebuilt) throw err
+    event = await withTimeout(signChallenge(rebuilt, challenge),
+      'Your signer did not respond — approve the request in your Nostr app, or use another signer.')
+  }
   await api.login(event)
 }
 
-export async function loginWithExtension() {
-  if (!window.nostr) throw new Error('No NIP-07 extension found (install Alby, nos2x, …)')
-  await signChallengeAndLogin(async (evt) => {
-    const unsigned = { ...evt, pubkey: await window.nostr!.getPublicKey() }
-    return window.nostr!.signEvent(unsigned)
-  })
+/** nostr-tools' error when a BunkerSigner's relay subscription is gone. */
+export const isDeadSignerError = (e: unknown) =>
+  /not open anymore|signer is closed|no longer open/i.test(e instanceof Error ? e.message : String(e ?? ''))
+
+interface StoredNip46 {
+  kind?: 'bunker' | 'nostrconnect'
+  uri?: string
+  bunkerPubkey?: string
+  relays?: string[]
+  clientNsec?: string
 }
 
-export async function loginWithNsec(nsec: string) {
-  const decoded = nip19.decode(nsec.trim())
-  if (decoded.type !== 'nsec') throw new Error('that is not an nsec')
-  await signChallengeAndLogin(async (evt) => finalizeEvent(evt, decoded.data))
-}
-
-// ── NIP-46 remote signing ───────────────────────────────────────────────
-
-// bunker://… URI or user@domain NIP-05. `onAuthUrl` fires if the signer
-// wants the user to approve in its own web UI.
-export async function loginWithBunker(input: string, onAuthUrl?: (url: string) => void) {
-  const bp = await parseBunkerInput(input.trim())
-  if (!bp) throw new Error('not a valid bunker:// URI or NIP-05 identifier')
-  const signer = BunkerSigner.fromBunker(generateSecretKey(), bp, {
-    onauth: (url) => onAuthUrl?.(url),
-  })
+/** Rebuild the persisted NIP-46 pairing without replaying `connect`. */
+export async function restoreNip46Signer(): Promise<NostrSigner | null> {
+  let stored: StoredNip46 | null = null
+  try { stored = JSON.parse(localStorage.getItem(SIGNER_STORAGE_KEY_NIP46) ?? 'null') } catch { return null }
+  if (!stored?.clientNsec) return null
+  let clientSecret: Uint8Array
   try {
-    await withTimeout(signer.connect(), 'remote signer did not answer the connect request')
-    await signChallengeAndLogin((evt) =>
-      withTimeout(signer.signEvent(evt), 'remote signer did not sign (approve the request in your signer app)'))
-  } finally {
-    signer.close().catch(() => {})
-  }
-}
+    const decoded = nip19.decode(stored.clientNsec)
+    if (decoded.type !== 'nsec') return null
+    clientSecret = decoded.data
+  } catch { return null }
 
-// nostrconnect:// flow: we mint a URI, the signer app scans/receives it
-// and connects back to us over the relays.
-const NOSTRCONNECT_RELAYS = ['wss://relay.nsec.app', 'wss://relay.primal.net']
+  const bp = stored.kind === 'bunker' && stored.uri
+    ? await parseBunkerInput(stored.uri)
+    : stored.bunkerPubkey && stored.relays?.length
+      ? { pubkey: stored.bunkerPubkey, relays: stored.relays, secret: null }
+      : null
+  if (!bp?.pubkey || !bp.relays.length) return null
 
-export interface NostrConnectFlow {
-  uri: string
-  /** resolves once the signer connected and signed us in */
-  done: Promise<void>
-  cancel: () => void
-}
-
-export function startNostrConnect(): NostrConnectFlow {
-  const clientSk = generateSecretKey()
-  const secret = Math.random().toString(36).slice(2, 12)
-  const uri = createNostrConnectURI({
-    clientPubkey: getPublicKey(clientSk),
-    relays: NOSTRCONNECT_RELAYS,
-    secret,
-    name: 'Obelisk Agents',
-    url: window.location.origin,
+  const signer = BunkerSigner.fromBunker(clientSecret, bp, {
+    onauth: (url) => window.open(url, '_blank', 'width=600,height=700'),
   })
-  const abort = new AbortController()
-  const done = (async () => {
-    const signer = await BunkerSigner.fromURI(clientSk, uri, {}, abort.signal)
-    try {
-      await signChallengeAndLogin((evt) =>
-        withTimeout(signer.signEvent(evt), 'remote signer did not sign (approve the request in your signer app)'))
-    } finally {
-      signer.close().catch(() => {})
-    }
-  })()
-  return { uri, done, cancel: () => abort.abort() }
+  if (bp.secret) await signer.connect()
+  else await signer.getPublicKey()
+  return signer as unknown as NostrSigner
+}
+
+/** Forget every persisted signer (used on logout / "use another signer"). */
+export async function clearStoredSigners(signer?: NostrSigner | null) {
+  try { await signer?.close?.() } catch { /* already closed */ }
+  await clearPersistedNip46()
+  await clearPersistedNsec()
 }

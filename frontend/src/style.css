@@ -255,3 +255,147 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   background: #a3a3a3; transition: all 0.2s ease; display: block;
 }
 .lc-switch.on .lc-switch-knob { left: 20px; background: #b4f953; }
+
+/* ════════════════════════════════════════════════════════════════════
+   v2 shell — sidebar, avatars, bot cards, tabs, login modal skin
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── Brand ── */
+.lc-brand-mark {
+  width: 56px; height: 56px; border-radius: 16px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 26px; color: #0a0a0a;
+  background: linear-gradient(135deg, #c5ff6e, #5a8f1f);
+  box-shadow: 0 0 40px rgba(180,249,83,0.25);
+}
+.lc-orb {
+  position: absolute; width: 560px; height: 560px; border-radius: 9999px; pointer-events: none;
+  background: radial-gradient(circle, rgba(180,249,83,0.10) 0%, transparent 65%);
+  filter: blur(10px);
+}
+.lc-orb-2 { background: radial-gradient(circle, rgba(90,143,31,0.12) 0%, transparent 65%); }
+.lc-check {
+  width: 20px; height: 20px; border-radius: 9999px; flex-shrink: 0; margin-top: 1px;
+  display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800;
+  background: #1e2812; color: #b4f953; border: 1px solid #2d3a1a;
+}
+
+/* ── Sidebar ── */
+.lc-sidebar {
+  position: fixed; inset: 0 auto 0 0; width: 16rem; z-index: 30;
+  flex-direction: column; padding: 24px 16px 16px;
+  background: rgba(10,10,10,0.92); backdrop-filter: blur(12px);
+  border-right: 1px solid #262626;
+}
+.lc-nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 12px; border-radius: 10px;
+  font-size: 14px; font-weight: 500; color: #a3a3a3;
+  transition: all 0.15s ease; border: 1px solid transparent;
+}
+.lc-nav-item:hover { color: #fafafa; background: #171717; }
+.lc-nav-item.active { color: #b4f953; background: #1e2812; border-color: #2d3a1a; }
+.lc-identity {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px; border-radius: 12px;
+  background: #121212; border: 1px solid #262626;
+}
+.lc-icon-btn {
+  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: #a3a3a3; transition: all 0.15s ease;
+}
+.lc-icon-btn:hover { color: #fafafa; background: #262626; }
+
+/* ── Avatars ── */
+.lc-avatar { position: relative; display: inline-block; flex-shrink: 0; }
+.lc-avatar img, .lc-avatar-mono {
+  width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+  object-fit: cover; background: #0a0a0a;
+  box-shadow: 0 0 0 3px #171717, 0 4px 16px rgba(0,0,0,0.5);
+}
+.lc-avatar-mono {
+  font-weight: 800; color: #0a0a0a;
+  background: linear-gradient(135deg, #b4f953, #5a8f1f);
+}
+.lc-avatar-status {
+  position: absolute; right: -2px; bottom: -2px;
+  width: 14px; height: 14px; border-radius: 9999px; border: 3px solid #171717;
+}
+
+/* ── Stats / search / chips / tags ── */
+.lc-stat {
+  background: linear-gradient(180deg, #171717, #131313);
+  border: 1px solid #262626; border-radius: 12px; padding: 14px 16px;
+}
+.lc-search {
+  display: flex; align-items: center; gap: 8px;
+  background: #0a0a0a; border: 1px solid #262626; border-radius: 9999px;
+  padding: 0 14px; color: #737373; transition: border-color 0.2s ease;
+}
+.lc-search:focus-within { border-color: #b4f953; color: #b4f953; }
+.lc-search input { flex: 1; background: transparent; border: none; outline: none; color: #fafafa; font-size: 14px; padding: 9px 0; }
+.lc-search input::placeholder { color: #525252; }
+.lc-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px; border-radius: 9999px;
+  background: #0f0f0f; border: 1px solid #262626; color: #a3a3a3;
+}
+.lc-tag {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.08em;
+  background: #1e2812; color: #b4f953; border-radius: 6px; padding: 2px 6px;
+}
+
+/* ── Bot cards ── */
+.lc-bot-card:hover { border-color: #3d4d24; transform: translateY(-2px); }
+.lc-bot-banner {
+  height: 72px; background-size: cover; background-position: center;
+  background-color: #111;
+  background-image:
+    radial-gradient(circle at 20% 0%, rgba(180,249,83,0.18), transparent 60%),
+    linear-gradient(135deg, #1a2410, #0f0f0f 70%);
+}
+
+/* ── Tabs ── */
+.lc-tabs { display: flex; gap: 4px; padding: 0 16px; border-top: 1px solid #262626; overflow-x: auto; }
+.lc-tabs button {
+  padding: 12px 14px; font-size: 13px; font-weight: 600; color: #a3a3a3;
+  border-bottom: 2px solid transparent; white-space: nowrap; transition: color 0.15s ease;
+}
+.lc-tabs button:hover { color: #fafafa; }
+.lc-tabs button.active { color: #b4f953; border-bottom-color: #b4f953; }
+
+/* ── Login modal (@nostr-wot/ui) — same skin as obelisk-dex / relay admin ── */
+.nui-modal-overlay { backdrop-filter: blur(6px); }
+.nui-modal {
+  border: 1px solid #262626;
+  box-shadow: 0 0 60px rgba(180,249,83,0.08), 0 24px 64px rgba(0,0,0,0.6) !important;
+  animation: fade-in-up 0.3s ease-out both;
+}
+.nui-widget-title { font-weight: 800; letter-spacing: -0.01em; }
+.nui-method-button {
+  padding: 16px !important; gap: 14px; border-radius: 14px !important;
+  border-color: #262626 !important; background: #0f0f0f !important;
+}
+.nui-method-button:hover, .nui-method-button:focus-visible {
+  border-color: #b4f953 !important;
+  background: color-mix(in oklab, #0a0a0a 90%, #b4f953 10%) !important;
+  outline: none;
+}
+.nui-method-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; flex-shrink: 0; border-radius: 10px;
+  background: color-mix(in oklab, #b4f953 14%, transparent); color: #b4f953;
+  border: 1px solid color-mix(in oklab, #b4f953 22%, transparent);
+}
+.nui-method-icon svg { width: 20px; height: 20px; }
+.nui-method-label { font-weight: 600; letter-spacing: -0.01em; }
+.nui-method-hint { font-size: 12px; line-height: 1.35; }
+.nui-qr { border-radius: 12px; background: #fafafa; padding: 8px; }
+.nui-key-display { font-size: 11px; }
+.nui-open-signer {
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 0 12px; padding: 10px 14px; border-radius: 9999px;
+  background: #b4f953; color: #0a0a0a; font-weight: 700; font-size: 14px;
+}
+.nui-modal input[type="checkbox"] { accent-color: #b4f953; }

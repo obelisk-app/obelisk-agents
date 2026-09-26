@@ -10,7 +10,8 @@ import { getPublicKey, nip19 } from 'nostr-tools';
 import { repoRoot, envLocalPath, adminPubkeys } from './config.mjs';
 import { parseSecret } from '../lib/secret.mjs';
 import { readEnvMap, readEnvEntries, applyEnvChanges } from './envfile.mjs';
-import { listBots, ecosystemApps } from './pm2.mjs';
+import { listBots, ecosystemApps, botAction } from './pm2.mjs';
+import { profilesFor, invalidateProfile, fetchRawProfile } from './profiles.mjs';
 
 const execFileP = promisify(execFile);
 
@@ -87,7 +88,7 @@ export async function botsOverview() {
   const env = readEnvMap();
   const entries = readEnvEntries();
   const procs = await listBots();
-  return procs.map((proc) => {
+  const bots = procs.map((proc) => {
     const app = ecosystemApps().find((a) => a.name === proc.name);
     const nsecEnv = nsecEnvFor(app, env);
     const prefix = envPrefix(app.script);
@@ -109,6 +110,10 @@ export async function botsOverview() {
         ?? { key, secret: /NSEC/.test(key), set: false, value: '' }),
     };
   });
+  // Live kind 0 (picture, name, about) for every bot — cached, so this only
+  // waits on relays the very first time a pubkey is seen.
+  const profiles = await profilesFor(bots.map((b) => b.pubkey), { wait: true });
+  return bots.map((b) => ({ ...b, profile: b.pubkey ? profiles[b.pubkey] : null }));
 }
 
 // ── Scaffold ────────────────────────────────────────────────────────────
@@ -209,7 +214,25 @@ ${marker}`;
 }
 
 // ── Profiles (kind 0) ───────────────────────────────────────────────────
-export function publishProfile(name, profile) {
+// kind 0 is replaceable: publishing only the edited fields would blank the
+// rest, so every publish merges onto the profile currently on the relays.
+// An empty string in the patch clears that field.
+export async function publishProfile(name, patch) {
+  const { pk } = botSecret(name);
+  let base = await fetchProfile(name);
+  // Relays timed out: fall back to the cached copy rather than an empty
+  // profile, which would wipe every field we weren't asked to change.
+  if (!Object.keys(base).length) base = (await profilesFor([pk], { wait: true }))[pk] ?? {};
+  const { updatedAt: _ignored, seenAt: _seen, _stale, ...existing } = base;
+  const merged = { ...existing, ...patch };
+  for (const k of Object.keys(merged)) if (merged[k] == null || merged[k] === '') delete merged[k];
+  if (!Object.keys(merged).length) throw new Error('nothing to publish');
+  const result = await runSetProfile(name, merged);
+  invalidateProfile(pk, merged);
+  return { ...result, profile: merged };
+}
+
+function runSetProfile(name, profile) {
   return new Promise((resolve, reject) => {
     ecosystemAppOrThrow(name);
     const nsecEnv = nsecEnvFor(ecosystemAppOrThrow(name), readEnvMap());
@@ -315,23 +338,21 @@ function botSecret(name) {
   return { sk, pk: getPublicKey(sk), nsecEnv };
 }
 
-const PROFILE_RELAYS = ['wss://public.obelisk.ar', 'wss://relay.damus.io', 'wss://purplepag.es', 'wss://relay.nostr.band'];
-
+// Fresh, complete kind 0 (see profiles.mjs — public relays, anonymous read).
 async function fetchProfile(name) {
-  const { sk, pk } = botSecret(name);
-  const { createPool } = await import('../lib/pool.mjs');
-  const pool = createPool(sk);
-  try {
-    const ev = await Promise.race([
-      pool.get(PROFILE_RELAYS, { kinds: [0], authors: [pk] }),
-      new Promise((resolve) => setTimeout(() => resolve(null), 6000)),
-    ]);
-    return ev ? JSON.parse(ev.content) : {};
-  } catch {
-    return {};
-  } finally {
-    pool.close(PROFILE_RELAYS);
-  }
+  return fetchRawProfile(botSecret(name).pk);
+}
+
+// For the edit form: live from relays, else the last-known cached copy
+// (flagged `_stale`) so a profile the relays dropped can be republished.
+export async function currentProfile(name) {
+  const live = await fetchProfile(name);
+  if (Object.keys(live).length) return live;
+  const { pk } = botSecret(name);
+  const cached = (await profilesFor([pk]))[pk];
+  if (!cached) return {};
+  const { updatedAt: _u, seenAt: _s, ...fields } = cached;
+  return { ...Object.fromEntries(Object.entries(fields).filter(([, v]) => v != null)), _stale: true };
 }
 
 export async function setAvatar(name, buffer, mime) {
@@ -339,10 +360,17 @@ export async function setAvatar(name, buffer, mime) {
   const { sk } = botSecret(name);
   const { uploadToBlossom } = await import('./media.mjs');
   const { url } = await uploadToBlossom(sk, buffer, mime);
-  // kind 0 is replaceable — merge with the current profile so setting the
-  // picture never blanks the name/about.
-  const existing = await fetchProfile(name);
-  const { output } = await publishProfile(name, { ...existing, picture: url });
+  // Bots that republish their own kind 0 (price-bot, sat-ars-bot) take the
+  // picture from a *_PICTURE env var — set it and restart, or the next tick
+  // would put the old picture back.
+  const app = ecosystemAppOrThrow(name);
+  const pictureVar = scriptEnvVars(app.script).find((v) => v.endsWith('_PICTURE'));
+  if (pictureVar) {
+    applyEnvChanges({ set: { [pictureVar]: url } });
+    await botAction(name, 'restart').catch(() => {});
+  }
+  // publishProfile merges, so setting the picture never blanks name/about.
+  const { output } = await publishProfile(name, { picture: url });
   return { url, output };
 }
 

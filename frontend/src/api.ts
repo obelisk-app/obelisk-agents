@@ -13,6 +13,28 @@ export interface BotCommand {
   example: string | null
 }
 
+/** kind 0 as the dashboard sees it (server-side cache of the relays). */
+export interface NostrProfile {
+  name: string | null
+  display_name: string | null
+  picture: string | null
+  banner: string | null
+  about: string | null
+  nip05: string | null
+  lud16: string | null
+  website: string | null
+  updatedAt?: number
+  /** unix s — last time a relay actually returned this profile */
+  seenAt?: number
+}
+
+export interface Session {
+  authed: boolean
+  npub?: string
+  pubkey?: string
+  profile?: NostrProfile | null
+}
+
 export interface Bot {
   name: string
   kind: 'bot' | 'agent'
@@ -26,6 +48,8 @@ export interface Bot {
   memory: number | null
   nsecEnv: string
   npub: string | null
+  pubkey: string | null
+  profile: NostrProfile | null
   envVars: EnvEntry[]
   lastLog: string | null
 }
@@ -61,7 +85,7 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  session: () => req<{ authed: boolean; npub?: string }>('/api/auth/session'),
+  session: () => req<Session>('/api/auth/session'),
   challenge: () => req<{ challenge: string }>('/api/auth/challenge'),
   login: (event: object) =>
     req<{ ok: boolean }>('/api/auth/login', { method: 'POST', body: JSON.stringify({ event }) }),
@@ -88,8 +112,9 @@ export const api = {
     req<{ removed: string }>(`/api/bots/${name}`, { method: 'DELETE' }),
   botLogs: (name: string, lines = 200) =>
     req<{ out: string[]; err: string[] }>(`/api/bots/${name}/logs?lines=${lines}`),
+  botProfile: (name: string) => req<Record<string, string>>(`/api/bots/${name}/profile`),
   publishProfile: (name: string, profile: object) =>
-    req<{ output: string }>(`/api/bots/${name}/profile`, { method: 'POST', body: JSON.stringify(profile) }),
+    req<{ output: string; profile: Record<string, string> }>(`/api/bots/${name}/profile`, { method: 'POST', body: JSON.stringify(profile) }),
 
   env: () => req<EnvEntry[]>('/api/env'),
   saveEnv: (set: Record<string, string>, unset: string[] = []) =>

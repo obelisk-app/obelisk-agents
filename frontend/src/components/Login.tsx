@@ -1,201 +1,212 @@
+// Sign-in screen: a branded splash plus @nostr-wot/ui's LoginModal (the
+// same sign-in obelisk-dex and the relay admin use). The modal only
+// attaches a signer; `authenticate` then signs our kind 22242 challenge
+// with it and the server decides whether that pubkey is an admin.
+//
+// Flow details ported from obelisk-relay's AdminAuth:
+//   • a signer the SDK restored on load (extension, saved bunker, saved
+//     nsec) signs in automatically — no clicks on a reload;
+//   • after an explicit logout / "use another signer" nothing signs in
+//     until the user picks again (an extension is always present, so the
+//     SDK would otherwise hand back the key we were asked to drop);
+//   • a stored NIP-46 session whose bunker is gone is discarded instead
+//     of failing identically on every load.
 import { useEffect, useRef, useState } from 'preact/hooks'
-import QRCode from 'qrcode'
-import { loginWithBunker, loginWithExtension, loginWithNsec, startNostrConnect, NostrConnectFlow } from '../auth'
-import { Flash } from './ui'
+import { LoginModal, useLogout, useSigner } from '@nostr-wot/ui'
+import type { NostrSigner } from '@nostr-wot/signers'
+import { NIP46_RELAYS, authenticate, clearStoredSigners, isDeadSignerError, withTimeout } from '../auth'
+import { LOGIN_METHOD_ICONS } from './loginIcons'
+import { Nip46SignerDeepLink } from './Nip46SignerDeepLink'
+import { Icon } from './ui'
 
-type Method = 'extension' | 'remote' | 'nsec'
-
-export function Login({ onLogin }: { onLogin: () => void }) {
-  const [method, setMethod] = useState<Method>('extension')
-  const [busy, setBusy] = useState(false)
+export function Login({ onLogin, fresh = false }: { onLogin: () => void; fresh?: boolean }) {
+  const signer = useSigner() as NostrSigner | null
+  const logout = useLogout()
+  const [open, setOpen] = useState(false)
   const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [signerPubkey, setSignerPubkey] = useState<string | null>(null)
+  const [awaitingChoice, setAwaitingChoice] = useState(fresh)
+  const attempted = useRef<string | null>(null)
+  const widgetBusy = useRef(false)
 
-  const attempt = async (fn: () => Promise<void>) => {
+  const discardDeadSigner = async (dead: NostrSigner | null) => {
+    await clearStoredSigners(dead)
+    attempted.current = null
+    setAwaitingChoice(true)
+    setError('Your saved signer connection expired. Sign in again.')
+    await logout()
+    setOpen(true)
+  }
+
+  const run = async (active: NostrSigner) => {
     setBusy(true)
     setError('')
     try {
-      await fn()
+      await authenticate(active)
       onLogin()
     } catch (e) {
-      setError((e as Error).message)
+      const message = e instanceof Error ? e.message : 'Authentication failed'
+      setError(message)
+      throw new Error(message)
     } finally {
       setBusy(false)
     }
   }
 
-  return (
-    <div class="min-h-screen lc-grid-bg flex items-center justify-center px-4 relative overflow-hidden">
-      {/* ambient glow */}
-      <div class="absolute w-[500px] h-[500px] rounded-full pointer-events-none"
-        style="background: radial-gradient(circle, rgba(180,249,83,0.07) 0%, transparent 65%); top: 15%; left: 50%; transform: translateX(-50%);" />
+  // A signer the SDK restored on load signs in on its own.
+  useEffect(() => {
+    if (!signer || awaitingChoice || widgetBusy.current) return
+    let cancelled = false
+    void (async () => {
+      try {
+        const pubkey = await withTimeout(signer.getPublicKey(),
+          'Your saved signer did not respond. Use another signer.', 15_000)
+        if (cancelled || attempted.current === pubkey) return
+        attempted.current = pubkey
+        setSignerPubkey(pubkey)
+        setOpen(false)
+        await run(signer)
+      } catch (e) {
+        if (cancelled) return
+        if (isDeadSignerError(e)) await discardDeadSigner(signer)
+        else setError(e instanceof Error ? e.message : 'Signer is unavailable')
+      }
+    })()
+    return () => { cancelled = true }
+  }, [signer, awaitingChoice])
 
-      <div class="lc-card lc-glow p-8 w-full max-w-md animate-fade-in-up relative">
-        <div class="text-center mb-6">
-          <div class="lc-monogram mx-auto mb-4 !w-14 !h-14 !rounded-2xl text-xl">⛩</div>
-          <h1 class="text-2xl font-extrabold lc-glow-text">
-            Obelisk <span class="text-lc-green">Agents</span>
-          </h1>
-          <p class="text-lc-muted text-sm mt-2">
-            Fleet control panel. Admins sign a challenge with their Nostr key — nothing else gets in.
-          </p>
-        </div>
+  // Nothing restored after a beat → open the modal so the first screen is
+  // the actual sign-in, not a button that leads to it.
+  useEffect(() => {
+    const t = setTimeout(() => { if (!signer || awaitingChoice) setOpen(true) }, 450)
+    return () => clearTimeout(t)
+  }, [])
 
-        <div class="lc-seg mb-5">
-          <button class={method === 'extension' ? 'active' : ''} onClick={() => setMethod('extension')}>Extension</button>
-          <button class={method === 'remote' ? 'active' : ''} onClick={() => setMethod('remote')}>Remote signer</button>
-          <button class={method === 'nsec' ? 'active' : ''} onClick={() => setMethod('nsec')}>nsec</button>
-        </div>
-
-        <Flash kind="err" text={error} />
-
-        {method === 'extension' && (
-          <ExtensionPane busy={busy} onGo={() => attempt(loginWithExtension)} />
-        )}
-        {method === 'remote' && (
-          <RemotePane busy={busy} attempt={attempt} onLogin={onLogin} onError={setError} />
-        )}
-        {method === 'nsec' && <NsecPane busy={busy} attempt={attempt} />}
-      </div>
-    </div>
-  )
-}
-
-function ExtensionPane({ busy, onGo }: { busy: boolean; onGo: () => void }) {
-  return (
-    <div>
-      <button class="lc-pill-primary w-full" disabled={busy} onClick={onGo}>
-        {busy ? <span class="lc-spinner" /> : 'Sign in with browser extension'}
-      </button>
-      <p class="text-xs text-lc-muted mt-3 text-center">
-        Uses NIP-07 — Alby, nos2x, Flamingo, horse…
-      </p>
-    </div>
-  )
-}
-
-// NIP-46: paste a bunker:// URI / NIP-05, or scan a nostrconnect QR from
-// a mobile signer (Amber, nsec.app, Alby Hub).
-function RemotePane({ busy, attempt, onLogin, onError }: {
-  busy: boolean
-  attempt: (fn: () => Promise<void>) => Promise<void>
-  onLogin: () => void
-  onError: (e: string) => void
-}) {
-  const [bunker, setBunker] = useState('')
-  const [authUrl, setAuthUrl] = useState('')
-  const [qr, setQr] = useState('')
-  const flowRef = useRef<NostrConnectFlow | null>(null)
-  const [waitingQr, setWaitingQr] = useState(false)
-
-  useEffect(() => () => flowRef.current?.cancel(), [])
-
-  const showQr = async () => {
-    onError('')
-    const flow = startNostrConnect()
-    flowRef.current = flow
-    setWaitingQr(true)
-    setQr(await QRCode.toDataURL(flow.uri, {
-      width: 232,
-      margin: 1,
-      color: { dark: '#0a0a0a', light: '#fafafa' },
-    }))
+  const onWidgetLogin = async ({ signer: picked }: { signer: NostrSigner }) => {
+    widgetBusy.current = true
+    setAwaitingChoice(false)
     try {
-      await flow.done
-      onLogin()
+      const pubkey = await withTimeout(picked.getPublicKey(), 'Signer did not respond.')
+      attempted.current = pubkey
+      setSignerPubkey(pubkey)
+      await run(picked)
     } catch (e) {
-      if (!String(e).includes('abort')) onError((e as Error).message || 'nostrconnect flow failed')
-      setWaitingQr(false)
-      setQr('')
+      if (isDeadSignerError(e)) {
+        await discardDeadSigner(picked)
+        return
+      }
+      throw e // keeps the modal open with the message inline
+    } finally {
+      widgetBusy.current = false
     }
   }
 
+  const useAnother = async () => {
+    setAwaitingChoice(true)
+    setError('')
+    setBusy(false)
+    setSignerPubkey(null)
+    attempted.current = null
+    await clearStoredSigners(signer)
+    await logout()
+    setOpen(true)
+  }
+
+  const authenticating = busy || (!!signer && !awaitingChoice && !error)
+
   return (
-    <div class="space-y-4">
-      <form
-        class="flex gap-2"
-        onSubmit={(e) => {
-          e.preventDefault()
-          attempt(() => loginWithBunker(bunker, (url) => setAuthUrl(url)))
-        }}
-      >
-        <input
-          class="lc-input font-mono text-xs"
-          placeholder="bunker://…  or  name@nsec.app"
-          value={bunker}
-          onInput={(e) => setBunker((e.target as HTMLInputElement).value)}
-        />
-        <button class="lc-pill-primary text-sm whitespace-nowrap" disabled={busy || !bunker.trim()}>
-          {busy ? <span class="lc-spinner" /> : 'Connect'}
-        </button>
-      </form>
+    <div class="min-h-screen lc-grid-bg relative overflow-hidden flex items-center justify-center px-4 py-10">
+      <Nip46SignerDeepLink />
+      <div class="lc-orb" style="top:-10%;left:-10%" />
+      <div class="lc-orb lc-orb-2" style="bottom:-20%;right:-10%" />
 
-      {authUrl && (
-        <p class="text-xs text-lc-muted">
-          Your signer wants confirmation:{' '}
-          <a class="text-lc-green hover:underline" href={authUrl} target="_blank" rel="noreferrer">open auth page ↗</a>
-        </p>
-      )}
+      <div class="relative w-full max-w-5xl grid lg:grid-cols-[1.1fr_1fr] gap-10 items-center">
+        <div class="animate-fade-in-up hidden lg:block">
+          <div class="lc-brand-mark mb-6">⛩</div>
+          <h1 class="text-5xl font-extrabold tracking-tight leading-[1.05]">
+            Obelisk <span class="text-lc-green lc-glow-text">Agents</span>
+          </h1>
+          <p class="text-lc-muted text-lg mt-4 max-w-md">
+            The control plane for the Obelisk bot fleet — supervise, configure and build Nostr
+            bots and LLM agents across our NIP-29 relays.
+          </p>
+          <ul class="mt-8 space-y-3 text-sm">
+            {[
+              ['Live fleet', 'PM2 status, logs and restarts for every bot'],
+              ['Nostr-native', 'each bot has its own key, profile and avatar'],
+              ['Operator', 'describe a bot, Codex builds and ships it'],
+            ].map(([title, text]) => (
+              <li key={title} class="flex items-start gap-3">
+                <span class="lc-check">✓</span>
+                <span><span class="font-semibold text-lc-white">{title}</span>
+                  <span class="text-lc-muted"> — {text}</span></span>
+              </li>
+            ))}
+          </ul>
+        </div>
 
-      <div class="flex items-center gap-3 text-xs text-lc-muted">
-        <span class="flex-1 border-t border-lc-border" /> or scan from your phone <span class="flex-1 border-t border-lc-border" />
+        <div class="lc-card lc-glow p-8 w-full max-w-md mx-auto animate-fade-in-up">
+          <div class="lg:hidden text-center mb-6">
+            <div class="lc-brand-mark mx-auto mb-3">⛩</div>
+            <h1 class="text-2xl font-extrabold">Obelisk <span class="text-lc-green">Agents</span></h1>
+          </div>
+          <h2 class="text-xl font-bold">Admin sign-in</h2>
+          <p class="text-sm text-lc-muted mt-1 mb-6">
+            Sign a one-time challenge with your Nostr identity. Only fleet admins get in; your key
+            never leaves your signer.
+          </p>
+
+          {error && (
+            <div class="mb-4 rounded-lg px-4 py-3 text-sm bg-red-500/10 text-red-300 border border-red-500/20">
+              {error}
+            </div>
+          )}
+
+          {authenticating ? (
+            <div class="space-y-3">
+              <div class="flex items-center gap-3 rounded-xl border border-lc-border bg-lc-black px-4 py-3">
+                <span class="lc-spinner !w-4 !h-4" />
+                <span class="text-sm">
+                  {busy ? 'Waiting for your signature…' : 'Preparing your signer…'}
+                  {signerPubkey && <span class="block text-xs text-lc-muted font-mono mt-0.5">{signerPubkey.slice(0, 16)}…</span>}
+                </span>
+              </div>
+              <button class="lc-pill-secondary w-full" onClick={useAnother}>Use another signer</button>
+            </div>
+          ) : (
+            <div class="space-y-3">
+              <button class="lc-pill-primary w-full !py-3 text-base gap-2" onClick={() => setOpen(true)}>
+                <Icon.bolt /> Sign in with Nostr
+              </button>
+              <p class="text-xs text-lc-muted text-center">
+                Extension (Alby, nos2x…) · Remote signer (Amber, nsec.app, Primal) · nsec
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
-      {!qr ? (
-        <button class="lc-pill-secondary w-full text-sm" onClick={showQr} disabled={waitingQr}>
-          Show nostrconnect QR
-        </button>
-      ) : (
-        <div class="text-center">
-          <img src={qr} alt="nostrconnect QR" class="mx-auto rounded-lg" />
-          <div class="flex items-center justify-center gap-2 mt-3 text-xs text-lc-muted">
-            <span class="lc-spinner !w-3.5 !h-3.5" /> waiting for your signer…
-            <button
-              class="text-lc-green hover:underline"
-              onClick={() => navigator.clipboard.writeText(flowRef.current?.uri ?? '')}
-            >
-              copy URI
-            </button>
-            <button
-              class="text-red-400 hover:underline"
-              onClick={() => { flowRef.current?.cancel(); setQr(''); setWaitingQr(false) }}
-            >
-              cancel
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function NsecPane({ busy, attempt }: {
-  busy: boolean
-  attempt: (fn: () => Promise<void>) => Promise<void>
-}) {
-  const [nsec, setNsec] = useState('')
-  return (
-    <div>
-      <form
-        class="flex gap-2"
-        onSubmit={(e) => {
-          e.preventDefault()
-          attempt(() => loginWithNsec(nsec))
-        }}
-      >
-        <input
-          class="lc-input font-mono"
-          type="password"
-          placeholder="nsec1…"
-          value={nsec}
-          onInput={(e) => setNsec((e.target as HTMLInputElement).value)}
+      <div class="obelisk-login">
+        <LoginModal
+          open={open}
+          onClose={() => setOpen(false)}
+          title="Sign in to Obelisk Agents"
+          subtitle="Use the Nostr key authorized as a fleet admin."
+          methods={['nip07', 'nip46', 'import']}
+          methodIcons={LOGIN_METHOD_ICONS}
+          flatLayout
+          nip46Mode="qr"
+          nip46Relays={NIP46_RELAYS}
+          nip46Metadata={{
+            name: 'Obelisk Agents',
+            url: window.location.origin,
+            description: 'Admin sign-in for the Obelisk bot fleet',
+          }}
+          onLogin={onWidgetLogin}
+          onError={setError}
         />
-        <button class="lc-pill-primary" disabled={busy || !nsec.trim()}>
-          {busy ? <span class="lc-spinner" /> : 'Go'}
-        </button>
-      </form>
-      <p class="text-xs text-lc-muted mt-3 text-center">
-        Signs locally in this tab — the key is never sent or stored.
-      </p>
+      </div>
     </div>
   )
 }

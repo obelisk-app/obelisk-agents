@@ -4,12 +4,25 @@ import { api, Bot, EnvEntry } from '../api'
 import { toast } from './toast'
 import { Section as SettingsSection, metaFor, SECTION_TITLES } from '../settings-meta'
 import { SettingField } from './fields'
-import { CopyChip, Flash, Section, StatusDot, fmtUptime, shortNpub } from './ui'
+import { Avatar, CopyChip, Flash, Icon, Section, fmtMem, fmtUptime, profileMissing, profileName, shortNpub } from './ui'
+
+type Tab = 'overview' | 'settings' | 'profile' | 'logs'
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'settings', label: 'Settings' },
+  { id: 'profile', label: 'Nostr profile' },
+  { id: 'logs', label: 'Logs' },
+]
 
 export function BotDetail({ name }: { name: string; path?: string }) {
   const [bot, setBot] = useState<Bot | null>(null)
   const [error, setError] = useState('')
   const [flash, setFlash] = useState('')
+  const [busy, setBusy] = useState('')
+  const [tab, setTab] = useState<Tab>(() => {
+    const h = window.location.hash.slice(1) as Tab
+    return TABS.some((t) => t.id === h) ? h : 'overview'
+  })
 
   const refresh = () =>
     api.bots()
@@ -26,32 +39,117 @@ export function BotDetail({ name }: { name: string; path?: string }) {
     return () => clearInterval(t)
   }, [name])
 
+  const pick = (t: Tab) => {
+    setTab(t)
+    history.replaceState(null, '', `#${t}`)
+  }
+
+  const act = async (action: 'start' | 'stop' | 'restart') => {
+    if (!bot) return
+    setBusy(action)
+    try {
+      await api.botAction(bot.name, action)
+      toast.ok(`${action === 'stop' ? 'Stopped' : action === 'start' ? 'Started' : 'Restarted'} ${bot.name.replace(/^obelisk-/, '')}`)
+      await refresh()
+    } catch (e) {
+      toast.err((e as Error).message)
+    } finally {
+      setBusy('')
+    }
+  }
+
   if (!bot) {
     return error
       ? <Flash kind="err" text={error} />
       : <div class="lc-card h-64 lc-skeleton" />
   }
 
+  const short = bot.name.replace(/^obelisk-/, '')
+  const title = profileName(bot.profile, short)
+  const p = bot.profile
+
   return (
     <div class="animate-fade-in-up">
-      <a href="/" class="text-xs text-lc-muted hover:text-lc-green transition-colors">← fleet</a>
-      <div class="flex items-center gap-3 mb-6 mt-2 flex-wrap">
-        <StatusDot status={bot.status} />
-        <h1 class="text-2xl font-extrabold">{bot.name}</h1>
-        <span class="text-sm text-lc-muted">
-          {bot.script} · up {fmtUptime(bot.uptime)} · {bot.restarts} restarts
-        </span>
-        {bot.npub && <CopyChip text={bot.npub} label={shortNpub(bot.npub)} />}
-      </div>
+      <a href="/" class="text-xs text-lc-muted hover:text-lc-green transition-colors">← Fleet</a>
+
+      <section class="lc-card overflow-hidden mt-3 mb-6">
+        <div class="lc-bot-banner !h-32" style={p?.banner ? { backgroundImage: `url("${p.banner}")` } : undefined} />
+        <div class="px-6 pb-6">
+          <div class="flex flex-wrap items-end gap-4 -mt-12">
+            <Avatar picture={p?.picture} label={short} size={96} status={bot.status} />
+            <div class="min-w-0 flex-1 pb-1">
+              <h1 class="text-2xl font-extrabold tracking-tight flex items-center gap-2 flex-wrap">
+                {title}
+                {bot.kind === 'agent' && <span class="lc-tag">AGENT</span>}
+              </h1>
+              <div class="text-sm text-lc-muted flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span class="font-mono">{bot.name}</span>
+                <span>·</span>
+                <span class={bot.status === 'online' ? 'text-lc-green' : bot.status === 'errored' ? 'text-red-400' : ''}>{bot.status}</span>
+                {bot.status === 'online' && <><span>·</span><span>up {fmtUptime(bot.uptime)}</span></>}
+              </div>
+            </div>
+            <div class="flex gap-2 pb-1">
+              {bot.status === 'online' ? (
+                <>
+                  <button class="lc-pill-secondary text-sm gap-1.5" disabled={!!busy} onClick={() => act('restart')}>
+                    <Icon.restart /> {busy === 'restart' ? '…' : 'Restart'}
+                  </button>
+                  <button class="lc-pill-danger text-sm gap-1.5" disabled={!!busy} onClick={() => act('stop')}>
+                    <Icon.stop /> {busy === 'stop' ? '…' : 'Stop'}
+                  </button>
+                </>
+              ) : (
+                <button class="lc-pill-primary text-sm gap-1.5" disabled={!!busy} onClick={() => act('start')}>
+                  <Icon.play /> {busy === 'start' ? '…' : 'Start'}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {p?.about && <p class="text-sm text-lc-muted mt-4 max-w-3xl whitespace-pre-line">{p.about}</p>}
+
+          <div class="flex flex-wrap gap-1.5 mt-4 text-[11px]">
+            {bot.npub
+              ? <span class="lc-chip"><CopyChip text={bot.npub} label={shortNpub(bot.npub)} /></span>
+              : <span class="lc-chip !text-red-400">no nsec ({bot.nsecEnv})</span>}
+            {p?.nip05 && <span class="lc-chip">✓ {p.nip05}</span>}
+            {p?.lud16 && <span class="lc-chip">⚡ {p.lud16}</span>}
+            {bot.npub && (
+              <a class="lc-chip hover:!text-lc-green" href={`https://njump.me/${bot.npub}`} target="_blank" rel="noreferrer">
+                view on Nostr ↗
+              </a>
+            )}
+            <span class="lc-chip font-mono">{bot.script}</span>
+            <span class="lc-chip">{bot.cpu ?? 0}% cpu · {fmtMem(bot.memory)}</span>
+            <span class="lc-chip">↻ {bot.restarts} restarts</span>
+            {profileMissing(p) && (
+              <button class="lc-chip !text-yellow-400 !border-yellow-900 hover:!border-yellow-600" onClick={() => pick('profile')}>
+                ⚠ relays no longer have this profile — republish
+              </button>
+            )}
+          </div>
+        </div>
+
+        <nav class="lc-tabs">
+          {TABS.map((t) => (
+            <button key={t.id} class={tab === t.id ? 'active' : ''} onClick={() => pick(t.id)}>{t.label}</button>
+          ))}
+        </nav>
+      </section>
 
       <Flash kind="err" text={error} />
       <Flash kind="ok" text={flash} />
 
-      <CommandsSection bot={bot} />
-      <EnvSection bot={bot} onSaved={(msg) => { setFlash(msg); refresh() }} onError={setError} />
-      <ProfileSection bot={bot} onDone={setFlash} onError={setError} />
-      <LogsSection name={bot.name} />
-      <DangerZone bot={bot} />
+      {tab === 'overview' && (
+        <>
+          <CommandsSection bot={bot} />
+          <DangerZone bot={bot} />
+        </>
+      )}
+      {tab === 'settings' && <EnvSection bot={bot} onSaved={(msg) => { setFlash(msg); refresh() }} onError={setError} />}
+      {tab === 'profile' && <ProfileSection bot={bot} onDone={(msg) => { setFlash(msg); refresh() }} onError={setError} />}
+      {tab === 'logs' && <LogsSection name={bot.name} />}
     </div>
   )
 }
@@ -285,15 +383,38 @@ function EnvSection({ bot, onSaved, onError }: {
 }
 
 // ── Profile (kind 0) ────────────────────────────────────────────────────
+const PROFILE_FIELDS = ['name', 'display_name', 'about', 'picture', 'banner', 'nip05', 'lud16', 'website'] as const
+type ProfileForm = Record<(typeof PROFILE_FIELDS)[number], string>
+const emptyProfile = () => Object.fromEntries(PROFILE_FIELDS.map((k) => [k, ''])) as ProfileForm
+
 function ProfileSection({ bot, onDone, onError }: {
   bot: Bot
   onDone: (msg: string) => void
   onError: (msg: string) => void
 }) {
-  const [p, setP] = useState({ name: '', display_name: '', about: '', picture: '' })
+  const [p, setP] = useState<ProfileForm>(emptyProfile)
+  const [loaded, setLoaded] = useState(false)
+  const [stale, setStale] = useState(false)
   const [busy, setBusy] = useState(false)
   const [uploading, setUploading] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+
+  // Prefill with what's on the relays right now, so editing is editing.
+  useEffect(() => {
+    setLoaded(false)
+    api.botProfile(bot.name)
+      .then((current) => {
+        setStale(!!current._stale)
+        setP({ ...emptyProfile(), ...Object.fromEntries(
+          PROFILE_FIELDS.map((k) => [k, typeof current[k] === 'string' ? current[k] : '']),
+        ) })
+      })
+      .catch(() => {
+        const cached = bot.profile
+        if (cached) setP({ ...emptyProfile(), ...Object.fromEntries(PROFILE_FIELDS.map((k) => [k, cached[k] ?? ''])) })
+      })
+      .finally(() => setLoaded(true))
+  }, [bot.name])
 
   // Picture flow: browser → manager → Blossom upload signed with the BOT's
   // key → merged kind 0 published to relays. One click, live everywhere.
@@ -303,7 +424,7 @@ function ProfileSection({ bot, onDone, onError }: {
     try {
       const { url } = await api.uploadAvatar(bot.name, file)
       setP((prev) => ({ ...prev, picture: url }))
-      onDone(`Picture uploaded and profile published — ${url}`)
+      onDone('Picture uploaded and profile published.')
     } catch (err) {
       onError((err as Error).message)
     } finally {
@@ -317,9 +438,13 @@ function ProfileSection({ bot, onDone, onError }: {
     setBusy(true)
     onError('')
     try {
-      const body = Object.fromEntries(Object.entries(p).filter(([, v]) => v.trim() !== ''))
-      const { output } = await api.publishProfile(bot.name, body)
-      onDone(`Profile published: ${output.split('\n').pop()}`)
+      // Every field is sent: the server merges onto the live profile, and an
+      // emptied field is cleared on purpose.
+      const { output } = await api.publishProfile(bot.name, Object.fromEntries(
+        Object.entries(p).map(([k, v]) => [k, v.trim()]),
+      ))
+      setStale(false)
+      onDone(`Profile published — ${output.split('\n').pop()}`)
     } catch (err) {
       onError((err as Error).message)
     } finally {
@@ -327,62 +452,83 @@ function ProfileSection({ bot, onDone, onError }: {
     }
   }
 
-  const field = (key: keyof typeof p, label: string, placeholder: string) => (
+  const set = (key: keyof ProfileForm) => (e: Event) =>
+    setP((prev) => ({ ...prev, [key]: (e.target as HTMLInputElement).value }))
+
+  const field = (key: keyof ProfileForm, label: string, placeholder: string) => (
     <label class="block">
       <span class="text-xs text-lc-muted block mb-1">{label}</span>
-      <input
-        class="lc-input"
-        placeholder={placeholder}
-        value={p[key]}
-        onInput={(e) => setP((prev) => ({ ...prev, [key]: (e.target as HTMLInputElement).value }))}
-      />
+      <input class="lc-input" placeholder={placeholder} value={p[key]} onInput={set(key)} disabled={!loaded} />
     </label>
   )
 
+  const short = bot.name.replace(/^obelisk-/, '')
+
   return (
-    <Section title="Profile (kind 0)">
-      <p class="text-xs text-lc-muted mb-4">
-        Publishes via <code class="text-lc-green">tools/set-profile.mjs</code> with this bot's key.
-        Empty fields are left untouched.
-      </p>
-      <form class="grid gap-3 md:grid-cols-2" onSubmit={publish}>
-        {field('name', 'Name', 'price-bot')}
-        {field('display_name', 'Display name', 'BTC $109,431')}
-        <div class="block">
-          <span class="text-xs text-lc-muted block mb-1">Picture</span>
-          <div class="flex gap-2">
-            <input
-              class="lc-input"
-              placeholder="https://…/avatar.png — or upload →"
-              value={p.picture}
-              onInput={(e) => setP((prev) => ({ ...prev, picture: (e.target as HTMLInputElement).value }))}
-            />
-            <button type="button" class="lc-pill-secondary text-xs whitespace-nowrap" disabled={uploading}
-              onClick={() => fileRef.current?.click()}>
-              {uploading ? <span class="lc-spinner" /> : '⬆ Upload'}
-            </button>
-            <input ref={fileRef} type="file" accept="image/*" class="hidden"
-              onChange={(e) => {
-                const file = (e.target as HTMLInputElement).files?.[0]
-                if (file) uploadPicture(file)
-              }} />
+    <div class="grid lg:grid-cols-[1fr_300px] gap-6 items-start">
+      <Section title="Nostr profile (kind 0)">
+        <p class="text-xs text-lc-muted mb-4 -mt-1">
+          Signed with this bot's own key and published to its relays. Only what you change is
+          changed — the rest of the live profile is kept.
+        </p>
+        {stale && (
+          <div class="rounded-lg px-4 py-2 text-xs mb-4 border bg-yellow-950/40 border-yellow-900 text-yellow-300">
+            The relays no longer have this bot's profile — this is the last-known copy. Publish it to put it back.
           </div>
-          <span class="text-[11px] text-lc-muted/70 block mt-1">
-            Uploads to Blossom signed with the bot's key, then publishes the profile instantly.
-          </span>
-        </div>
-        {field('about', 'About', 'What this bot does')}
-        {p.picture && (
-          <img src={p.picture} alt="avatar preview"
-            class="w-16 h-16 rounded-xl object-cover border border-lc-border md:col-span-2" />
         )}
-        <div class="md:col-span-2">
-          <button class="lc-pill-primary text-sm" disabled={busy}>
-            {busy ? <span class="lc-spinner" /> : 'Publish profile'}
-          </button>
+        {!loaded && <div class="flex items-center gap-2 text-xs text-lc-muted mb-3"><span class="lc-spinner !w-3 !h-3" /> loading the live profile…</div>}
+        <form class="grid gap-3 md:grid-cols-2" onSubmit={publish}>
+          {field('name', 'Name', 'price-bot')}
+          {field('display_name', 'Display name', 'BTC $109,431')}
+          <label class="block md:col-span-2">
+            <span class="text-xs text-lc-muted block mb-1">About</span>
+            <textarea class="lc-input h-24 resize-y" placeholder="What this bot does" value={p.about}
+              onInput={set('about')} disabled={!loaded} />
+          </label>
+          <div class="block md:col-span-2">
+            <span class="text-xs text-lc-muted block mb-1">Picture</span>
+            <div class="flex gap-2">
+              <input class="lc-input" placeholder="https://…/avatar.png — or upload →" value={p.picture}
+                onInput={set('picture')} disabled={!loaded} />
+              <button type="button" class="lc-pill-secondary text-xs whitespace-nowrap" disabled={uploading || !bot.npub}
+                onClick={() => fileRef.current?.click()}>
+                {uploading ? <span class="lc-spinner" /> : '⬆ Upload'}
+              </button>
+              <input ref={fileRef} type="file" accept="image/*" class="hidden"
+                onChange={(e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0]
+                  if (file) uploadPicture(file)
+                }} />
+            </div>
+            <span class="text-[11px] text-lc-muted/70 block mt-1">
+              Uploads to Blossom signed with the bot's key, then publishes the profile instantly.
+            </span>
+          </div>
+          {field('banner', 'Banner', 'https://…/banner.jpg')}
+          {field('website', 'Website', 'https://…')}
+          {field('nip05', 'NIP-05', 'bot@obelisk.ar')}
+          {field('lud16', 'Lightning address', 'bot@getalby.com')}
+          <div class="md:col-span-2 flex items-center gap-3">
+            <button class="lc-pill-primary text-sm" disabled={busy || !loaded || !bot.npub}>
+              {busy ? <span class="lc-spinner" /> : 'Publish profile'}
+            </button>
+            {!bot.npub && <span class="text-xs text-red-400">This bot has no nsec configured.</span>}
+          </div>
+        </form>
+      </Section>
+
+      {/* Live preview of how clients will render it */}
+      <div class="lc-card overflow-hidden lg:sticky lg:top-6">
+        <div class="lc-bot-banner !h-20" style={p.banner ? { backgroundImage: `url("${p.banner}")` } : undefined} />
+        <div class="px-4 pb-4">
+          <div class="-mt-8 mb-2"><Avatar picture={p.picture} label={short} size={64} rounded="full" /></div>
+          <div class="font-bold">{p.display_name || p.name || short}</div>
+          {p.nip05 && <div class="text-xs text-lc-green">✓ {p.nip05}</div>}
+          <p class="text-xs text-lc-muted mt-2 whitespace-pre-line line-clamp-6">{p.about || 'No bio yet.'}</p>
+          <div class="text-[10px] uppercase tracking-wider text-lc-muted/60 mt-3">Preview</div>
         </div>
-      </form>
-    </Section>
+      </div>
+    </div>
   )
 }
 
