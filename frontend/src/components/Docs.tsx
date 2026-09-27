@@ -22,7 +22,7 @@ export function Docs({ file }: { file?: string; path?: string }) {
 
   return (
     <div class="animate-fade-in-up flex gap-6 items-start flex-col md:flex-row">
-      <nav class="lc-card p-3 md:w-56 w-full md:sticky md:top-20 shrink-0">
+      <nav class="lc-card p-3 md:w-56 w-full md:sticky md:top-20 lg:top-6 shrink-0">
         {files.map((f) => (
           <button
             key={f}

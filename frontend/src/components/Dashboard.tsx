@@ -49,12 +49,7 @@ export function Dashboard(_props: { path?: string }) {
 
   return (
     <div class="animate-fade-in-up">
-      <div class="flex items-end justify-between mb-6 flex-wrap gap-4">
-        <div>
-          <p class="text-xs font-bold uppercase tracking-[0.18em] text-lc-green mb-1">Fleet</p>
-          <h1 class="text-3xl font-extrabold tracking-tight">Your bots</h1>
-          <p class="text-sm text-lc-muted mt-1">Every bot runs with its own Nostr identity — this is how they look to the world.</p>
-        </div>
+      <div class="flex justify-end mb-6">
         <button class="lc-pill-primary gap-1.5" onClick={() => setWizard(true)}><Icon.plus /> New bot</button>
       </div>
 

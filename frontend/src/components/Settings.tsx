@@ -107,18 +107,13 @@ export function Settings(_props: { path?: string }) {
 
   return (
     <div class="animate-fade-in-up">
-      <div class="flex items-center justify-between mb-2">
-        <h1 class="text-2xl font-extrabold">Settings</h1>
-        {(busy || Object.keys(edits).length > 0) && (
+      {(busy || Object.keys(edits).length > 0) && (
+        <div class="flex justify-end mb-2">
           <span class="text-xs text-lc-muted flex items-center gap-1.5">
             <span class="lc-spinner !w-3 !h-3" /> saving…
           </span>
-        )}
-      </div>
-      <p class="text-sm text-lc-muted mb-6">
-        Fleet-wide defaults — changes <span class="text-lc-green">save automatically</span>.
-        Each bot's own page can override any of this for itself.
-      </p>
+        </div>
+      )}
 
       <Flash kind="err" text={error} />
 

@@ -7,12 +7,20 @@ import type { NostrSigner } from '@nostr-wot/signers'
 import { api, Session } from '../api'
 import { clearStoredSigners } from '../auth'
 import { Avatar, Icon, profileName, shortNpub } from './ui'
+import { Logo } from './Logo'
 
+// `description` is the terse line under the sidebar entry; `blurb` is the
+// fuller sentence in the page header. Both live here so each section is
+// described in one place, and the pages no longer repeat their own title.
 const NAV = [
-  { href: '/', label: 'Fleet', icon: Icon.bots },
-  { href: '/operator', label: 'Operator', icon: Icon.operator },
-  { href: '/settings', label: 'Settings', icon: Icon.settings },
-  { href: '/docs', label: 'Docs', icon: Icon.docs },
+  { href: '/', label: 'Fleet', description: 'Your bots', icon: Icon.bots,
+    blurb: 'Every bot runs with its own Nostr identity — this is how they look to the world.' },
+  { href: '/operator', label: 'Operator', description: 'AI agent with repo access', icon: Icon.operator,
+    blurb: 'Ask an AI agent to build a new bot, tweak one, or investigate a problem.' },
+  { href: '/settings', label: 'Settings', description: 'Fleet-wide defaults', icon: Icon.settings,
+    blurb: "Fleet-wide defaults — changes save automatically. Each bot's own page can override any of this for itself." },
+  { href: '/docs', label: 'Docs', description: 'Guides and reference', icon: Icon.docs,
+    blurb: 'How the fleet works, and how to build and run bots on it.' },
 ]
 
 export function Layout({ session, path, onLogout, children }: {
@@ -40,10 +48,14 @@ export function Layout({ session, path, onLogout, children }: {
   const name = profileName(session.profile, 'Admin')
 
   const nav = (
-    <nav class="flex flex-col gap-1">
-      {NAV.map(({ href, label, icon: I }) => (
+    <nav class="flex flex-col gap-2">
+      {NAV.map(({ href, label, description, icon: I }) => (
         <a key={href} href={href} class={`lc-nav-item ${active(href) ? 'active' : ''}`}>
-          <I /> {label}
+          <I />
+          <span class="min-w-0">
+            <span class="lc-nav-label">{label}</span>
+            <span class="lc-nav-desc">{description}</span>
+          </span>
         </a>
       ))}
     </nav>
@@ -64,19 +76,25 @@ export function Layout({ session, path, onLogout, children }: {
 
   const brand = (
     <a href="/" class="flex items-center gap-2.5 font-extrabold text-lg">
-      <span class="lc-brand-mark !w-8 !h-8 !text-base !rounded-lg">⛩</span>
+      <Logo size={32} />
       <span>Obelisk <span class="text-lc-green">Agents</span></span>
     </a>
   )
 
+  const section = NAV.find(({ href }) => active(href)) ?? NAV[0]!
+
+  // Desktop is a fixed-height column: header banner, then the only region
+  // that scrolls. The banner sits outside the scroll region, so the section
+  // title stays at the top however far the page scrolls. On mobile the page
+  // scrolls as a whole under the sticky brand header.
   return (
-    <div class="min-h-screen lc-grid-bg lg:pl-64">
+    <div class="min-h-screen lg:h-screen lg:overflow-hidden lg:pl-72 flex flex-col">
       {/* Desktop sidebar */}
       <aside class="lc-sidebar hidden lg:flex">
-        <div class="px-2 mb-8">{brand}</div>
-        {nav}
-        <div class="mt-auto space-y-3">
-          <p class="px-3 text-[11px] text-lc-muted/60 leading-relaxed">
+        <div class="admin-header-bar px-5">{brand}</div>
+        <div class="p-3 flex-1 min-h-0 overflow-y-auto">{nav}</div>
+        <div class="p-4 space-y-3 border-t border-lc-border">
+          <p class="px-1 text-[11px] text-lc-muted/60 leading-relaxed">
             agents.obelisk.ar · part of the{' '}
             <a class="hover:text-lc-green" href="https://github.com/obelisk-app" target="_blank" rel="noreferrer">Obelisk family</a>
           </p>
@@ -101,7 +119,16 @@ export function Layout({ session, path, onLogout, children }: {
         )}
       </header>
 
-      <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-8">{children}</main>
+      <div class="admin-header-bar flex-shrink-0 px-4 sm:px-6 lg:px-10">
+        <div class="min-w-0">
+          <h1 class="text-2xl font-bold">{section.label}</h1>
+          <p class="admin-header-blurb">{section.blurb}</p>
+        </div>
+      </div>
+
+      <main class="flex-1 min-h-0 lg:overflow-y-auto lc-grid-bg">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-8">{children}</div>
+      </main>
     </div>
   )
 }

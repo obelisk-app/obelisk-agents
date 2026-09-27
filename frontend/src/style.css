@@ -268,6 +268,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   background: linear-gradient(135deg, #c5ff6e, #5a8f1f);
   box-shadow: 0 0 40px rgba(180,249,83,0.25);
 }
+.lc-logo { display: block; border-radius: 23%; }
+.lc-logo-glow { box-shadow: 0 0 40px rgba(180,249,83,0.25); }
 .lc-orb {
   position: absolute; width: 560px; height: 560px; border-radius: 9999px; pointer-events: none;
   background: radial-gradient(circle, rgba(180,249,83,0.10) 0%, transparent 65%);
@@ -281,20 +283,40 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 
 /* ── Sidebar ── */
+/* Matches the relay admin console (obelisk-relay AdminPanel.tsx): an opaque
+   grey rail, 18rem wide, two-line entries (label + description) and 20px
+   glyphs, so the three Obelisk consoles read as one family. */
 .lc-sidebar {
-  position: fixed; inset: 0 auto 0 0; width: 16rem; z-index: 30;
-  flex-direction: column; padding: 24px 16px 16px;
-  background: rgba(10,10,10,0.92); backdrop-filter: blur(12px);
+  position: fixed; inset: 0 auto 0 0; width: 18rem; z-index: 30;
+  flex-direction: column;
+  background: #171717;
   border-right: 1px solid #262626;
 }
 .lc-nav-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 9px 12px; border-radius: 10px;
-  font-size: 14px; font-weight: 500; color: #a3a3a3;
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 12px; border-radius: 8px; text-align: left;
+  color: #fafafa;
   transition: all 0.15s ease; border: 1px solid transparent;
 }
-.lc-nav-item:hover { color: #fafafa; background: #171717; }
-.lc-nav-item.active { color: #b4f953; background: #1e2812; border-color: #2d3a1a; }
+.lc-nav-item svg { width: 20px; height: 20px; flex-shrink: 0; opacity: 0.8; }
+.lc-nav-label { display: block; font-size: 14px; font-weight: 600; line-height: 1.3; }
+.lc-nav-desc { display: block; font-size: 12px; line-height: 1.35; margin-top: 2px; color: #a3a3a3; }
+.lc-nav-item:hover { background: rgba(255,255,255,0.03); }
+.lc-nav-item.active { color: #b4f953; background: rgba(180,249,83,0.09); border-color: rgba(180,249,83,0.26); }
+.lc-nav-item.active .lc-nav-desc { color: rgba(180,249,83,0.78); }
+
+/* ── Header banner ──
+   The sidebar brand block and the page header share this height, so their
+   bottom rules meet as one continuous line. The page header sits outside the
+   scroll region, which is what keeps the section title fixed at the top. */
+.admin-header-bar {
+  display: flex; align-items: center; min-height: 112px;
+  background: linear-gradient(rgba(255,255,255,0.015), rgba(255,255,255,0.015)), #0a0a0a;
+  border-bottom: 1px solid #262626;
+}
+.lc-sidebar .admin-header-bar { background: transparent; }
+@media (max-width: 767px) { .admin-header-bar { min-height: 84px; } }
+.admin-header-blurb { margin: 4px 0 0; max-width: 72ch; font-size: 13px; line-height: 19px; color: #a3a3a3; }
 .lc-identity {
   display: flex; align-items: center; gap: 10px;
   padding: 10px; border-radius: 12px;

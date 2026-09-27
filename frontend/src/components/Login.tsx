@@ -18,6 +18,7 @@ import { NIP46_RELAYS, authenticate, clearStoredSigners, isDeadSignerError, with
 import { LOGIN_METHOD_ICONS } from './loginIcons'
 import { Nip46SignerDeepLink } from './Nip46SignerDeepLink'
 import { Icon } from './ui'
+import { Logo } from './Logo'
 
 export function Login({ onLogin, fresh = false }: { onLogin: () => void; fresh?: boolean }) {
   const signer = useSigner() as NostrSigner | null
@@ -123,7 +124,7 @@ export function Login({ onLogin, fresh = false }: { onLogin: () => void; fresh?:
 
       <div class="relative w-full max-w-5xl grid lg:grid-cols-[1.1fr_1fr] gap-10 items-center">
         <div class="animate-fade-in-up hidden lg:block">
-          <div class="lc-brand-mark mb-6">⛩</div>
+          <Logo size={56} glow class="mb-6" />
           <h1 class="text-5xl font-extrabold tracking-tight leading-[1.05]">
             Obelisk <span class="text-lc-green lc-glow-text">Agents</span>
           </h1>
@@ -148,7 +149,7 @@ export function Login({ onLogin, fresh = false }: { onLogin: () => void; fresh?:
 
         <div class="lc-card lc-glow p-8 w-full max-w-md mx-auto animate-fade-in-up">
           <div class="lg:hidden text-center mb-6">
-            <div class="lc-brand-mark mx-auto mb-3">⛩</div>
+            <Logo size={56} glow class="mx-auto mb-3" />
             <h1 class="text-2xl font-extrabold">Obelisk <span class="text-lc-green">Agents</span></h1>
           </div>
           <h2 class="text-xl font-bold">Admin sign-in</h2>

@@ -12,7 +12,6 @@ export function Operator(_props: { path?: string }) {
 
   return (
     <div class="animate-fade-in-up">
-      <h1 class="text-2xl font-extrabold mb-2">Operator</h1>
       <p class="text-lc-muted text-sm mb-6 max-w-2xl">
         An AI agent (Codex CLI) with shell access to this repo. It follows{' '}
         <a class="text-lc-green hover:underline" href="/docs/AGENTS.md">AGENTS.md</a> and{' '}

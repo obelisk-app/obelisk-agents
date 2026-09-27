@@ -78,10 +78,10 @@ export function BotDetail({ name }: { name: string; path?: string }) {
           <div class="flex flex-wrap items-end gap-4 -mt-12">
             <Avatar picture={p?.picture} label={short} size={96} status={bot.status} />
             <div class="min-w-0 flex-1 pb-1">
-              <h1 class="text-2xl font-extrabold tracking-tight flex items-center gap-2 flex-wrap">
+              <h2 class="text-2xl font-extrabold tracking-tight flex items-center gap-2 flex-wrap">
                 {title}
                 {bot.kind === 'agent' && <span class="lc-tag">AGENT</span>}
-              </h1>
+              </h2>
               <div class="text-sm text-lc-muted flex flex-wrap items-center gap-x-2 gap-y-1">
                 <span class="font-mono">{bot.name}</span>
                 <span>·</span>

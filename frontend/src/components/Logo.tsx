@@ -1,0 +1,33 @@
+import { useId } from 'preact/hooks'
+
+// Obelisk Agents mark: a bot head — antenna, ears, two lit eyes — on the
+// family's green tile. Inline rather than an <img> so it renders with the
+// first paint; the same drawing is src/assets/logo.svg (the favicon).
+export function Logo({ size = 32, glow = false, class: className = '' }: { size?: number; glow?: boolean; class?: string }) {
+  // Per-instance gradient id: the logo renders in both the (hidden on mobile)
+  // sidebar and the mobile header, and a url(#id) that resolves into a
+  // display:none SVG paints nothing.
+  const gid = `obelisk-agents-logo-${useId()}`
+  return (
+    <svg
+      viewBox="0 0 64 64" width={size} height={size} aria-hidden="true"
+      class={`lc-logo flex-shrink-0 ${glow ? 'lc-logo-glow' : ''} ${className}`}
+    >
+      <defs>
+        <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#c5ff6e" />
+          <stop offset="1" stop-color="#5a8f1f" />
+        </linearGradient>
+      </defs>
+      <rect width="64" height="64" rx="15" fill={`url(#${gid})`} />
+      <path d="M32 13v6" stroke="#0a0a0a" stroke-width="3.5" stroke-linecap="round" />
+      <circle cx="32" cy="11.5" r="3.5" fill="#0a0a0a" />
+      <rect x="8.5" y="30" width="5" height="11" rx="2.5" fill="#0a0a0a" />
+      <rect x="50.5" y="30" width="5" height="11" rx="2.5" fill="#0a0a0a" />
+      <rect x="15" y="20" width="34" height="31" rx="9" fill="#0a0a0a" />
+      <circle cx="25.5" cy="33" r="4" fill="#b4f953" />
+      <circle cx="38.5" cy="33" r="4" fill="#b4f953" />
+      <path d="M27 42.5h10" stroke="#b4f953" stroke-width="3" stroke-linecap="round" />
+    </svg>
+  )
+}
