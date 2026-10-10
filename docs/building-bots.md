@@ -163,6 +163,16 @@ Replaceable kinds (`0`, `39xxx`): relays keep only the newest per
   render it as a profile link (see `official/zap-bot.mjs` for npub encoding).
 - Reply to a message: add `['e', parentEventId]` alongside the `h` tag.
 
+### Linking to a bot or a note
+
+Link people to the Obelisk client, never to njump.me:
+`https://obelisk.ar/p/<nprofile>` for a profile (an nprofile with up to 3
+public `wss://` relay hints, or an npub; never bare hex) and
+`https://obelisk.ar/notes/<nevent>` for a note (group events must hint the
+group's relay). The profile page reads kind 0 from public relays only, which
+is why `tools/set-profile.mjs` always publishes there too. Full rules:
+obelisk-design `development-style/nostr-links.md`.
+
 ### Multi-line replies
 
 The Obelisk dex renders kind 9 content as Markdown **without soft breaks**:

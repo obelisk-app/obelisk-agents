@@ -13,8 +13,8 @@
 // Identity defaults to BOT_NSEC; override with --nsec-env=NAME to use
 // a different env var (e.g. WELCOME_BOT_NSEC).
 //
-// Relays: BOT_RELAYS (comma-separated). Defaults to wss://public.obelisk.ar
-// plus a few public profile relays so the bot is globally resolvable.
+// Relays: BOT_RELAYS (comma-separated, default wss://public.obelisk.ar), always
+// plus the public profile relays so the bot is globally resolvable.
 
 import { finalizeEvent } from 'nostr-tools';
 import { identityFromEnv } from '../lib/secret.mjs';
@@ -54,9 +54,14 @@ if (Object.keys(profile).length === 0) {
   process.exit(1);
 }
 
-const RELAYS = (process.env.BOT_RELAYS ||
-  'wss://public.obelisk.ar,wss://relay.damus.io,wss://relay.nostr.band,wss://nos.lol,wss://relay.primal.net,wss://purplepag.es')
-  .split(',').map((s) => s.trim()).filter(Boolean);
+// The public profile relays are always added: obelisk.ar/p/<nprofile> (and
+// most clients) look kind 0 up there, so a profile published only to a
+// private/whitelisted relay is invisible (obelisk-design: nostr-links.md).
+const PROFILE_RELAYS = ['wss://relay.damus.io', 'wss://relay.nostr.band', 'wss://nos.lol', 'wss://relay.primal.net', 'wss://purplepag.es'];
+const RELAYS = [...new Set([
+  ...(process.env.BOT_RELAYS || 'wss://public.obelisk.ar').split(',').map((s) => s.trim()).filter(Boolean),
+  ...PROFILE_RELAYS,
+])];
 
 const { sk, pk, npub } = identityFromEnv(envName);
 const pool = createPool(sk);
