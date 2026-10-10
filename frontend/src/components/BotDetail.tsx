@@ -1,11 +1,20 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { route } from 'preact-router'
+import { nip19 } from 'nostr-tools'
 import { api, Bot, EnvEntry } from '../api'
 import { toast } from './toast'
 import { OfficialSetup } from './OfficialSetup'
 import { Section as SettingsSection, metaFor, SECTION_TITLES } from '../settings-meta'
 import { SettingField } from './fields'
 import { Avatar, CopyChip, Flash, Icon, Section, fmtMem, fmtUptime, profileMissing, profileName, shortNpub } from './ui'
+
+// The bot's profile on the Obelisk web client, as an nprofile carrying the
+// relays it publishes to so the client knows where to find it.
+function obeliskProfileUrl(bot: Bot) {
+  const relays = (bot.envVars.find((v) => /_RELAYS$/.test(v.key) && !/LISTEN/.test(v.key))?.value || 'wss://public.obelisk.ar')
+    .split(',').map((r) => r.trim()).filter(Boolean).slice(0, 2)
+  return `https://obelisk.ar/p/${nip19.nprofileEncode({ pubkey: bot.pubkey!, relays })}`
+}
 
 type Tab = 'overview' | 'settings' | 'profile' | 'logs'
 const TABS: { id: Tab; label: string }[] = [
@@ -122,8 +131,8 @@ export function BotDetail({ name }: { name: string; path?: string }) {
               : <span class="lc-chip !text-red-400">no nsec ({bot.nsecEnv})</span>}
             {p?.nip05 && <span class="lc-chip">✓ {p.nip05}</span>}
             {p?.lud16 && <span class="lc-chip">⚡ {p.lud16}</span>}
-            {bot.npub && (
-              <a class="lc-chip hover:!text-lc-green" href={`https://njump.me/${bot.npub}`} target="_blank" rel="noreferrer">
+            {bot.pubkey && (
+              <a class="lc-chip hover:!text-lc-green" href={obeliskProfileUrl(bot)} target="_blank" rel="noreferrer">
                 view on Nostr ↗
               </a>
             )}
