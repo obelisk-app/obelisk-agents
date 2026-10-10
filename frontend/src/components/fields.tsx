@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'preact/hooks'
 import { api } from '../api'
 import { FieldMeta } from '../settings-meta'
-import { shortNpub } from './ui'
+import { CopyChip, shortNpub } from './ui'
 
 interface FieldProps {
   envKey: string
@@ -138,7 +138,9 @@ function ChipList({ value, onChange, placeholder, mono, shorten }: FieldProps & 
       {items.map((item, i) => (
         <span key={i} class={`inline-flex items-center gap-1.5 bg-lc-card border border-lc-border rounded-full px-2.5 py-1 text-xs ${mono ? 'font-mono' : ''}`}
           title={item}>
-          {shorten && item.startsWith('npub1') ? shortNpub(item) : item.replace(/^wss:\/\//, '')}
+          {item.startsWith('npub1')
+            ? <CopyChip text={item} label={shorten ? shortNpub(item) : item} />
+            : item.replace(/^wss:\/\//, '')}
           <button type="button" class="text-lc-muted hover:text-red-400" title="remove"
             onClick={() => onChange(items.filter((_, j) => j !== i).join(','))}>✕</button>
         </span>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'preact/hooks'
 import { route } from 'preact-router'
 import { api, Bot, EnvEntry } from '../api'
 import { toast } from './toast'
+import { OfficialSetup } from './OfficialSetup'
 import { Section as SettingsSection, metaFor, SECTION_TITLES } from '../settings-meta'
 import { SettingField } from './fields'
 import { Avatar, CopyChip, Flash, Icon, Section, fmtMem, fmtUptime, profileMissing, profileName, shortNpub } from './ui'
@@ -19,6 +20,7 @@ export function BotDetail({ name }: { name: string; path?: string }) {
   const [error, setError] = useState('')
   const [flash, setFlash] = useState('')
   const [busy, setBusy] = useState('')
+  const [setup, setSetup] = useState(false)
   const [tab, setTab] = useState<Tab>(() => {
     const h = window.location.hash.slice(1) as Tab
     return TABS.some((t) => t.id === h) ? h : 'overview'
@@ -99,11 +101,16 @@ export function BotDetail({ name }: { name: string; path?: string }) {
                     <Icon.stop /> {busy === 'stop' ? '…' : 'Stop'}
                   </button>
                 </>
+              ) : bot.official && !bot.npub ? (
+                <button class="lc-pill-primary text-sm gap-1.5" onClick={() => setSetup(true)}>
+                  <Icon.play /> Turn on
+                </button>
               ) : (
                 <button class="lc-pill-primary text-sm gap-1.5" disabled={!!busy} onClick={() => act('start')}>
                   <Icon.play /> {busy === 'start' ? '…' : 'Start'}
                 </button>
               )}
+              {setup && <OfficialSetup bot={bot} onClose={() => setSetup(false)} onDone={refresh} />}
             </div>
           </div>
 
@@ -201,7 +208,9 @@ function DangerZone({ bot }: { bot: Bot }) {
     setBusy(true)
     try {
       await api.removeBot(bot.name)
-      toast.ok(`${short} removed. Its script went to the trash folder and its keys stay commented in .env.local — nothing is unrecoverable.`)
+      toast.ok(bot.official
+        ? `${short} turned off and its identity reset. Its keys stay commented in .env.local; turn it on again from the dashboard.`
+        : `${short} removed. Its script went to the trash folder and its keys stay commented in .env.local — nothing is unrecoverable.`)
       route('/')
     } catch (e) {
       toast.err((e as Error).message)
@@ -215,11 +224,16 @@ function DangerZone({ bot }: { bot: Bot }) {
         <div>
           <h2 class="font-bold text-red-300">Danger zone</h2>
           <p class="text-xs text-lc-muted mt-1 max-w-md">
+            {bot.official ? <>
+              This is an official bot: resetting stops it and comments out its identity and settings in{' '}
+              <code>.env.local</code>. The bundled source stays, so you can turn it on again with another nsec.
+            </> : <>
             Removing stops the bot, deregisters it from PM2 and the ecosystem, moves its script to
             trash, and comments out its keys (the nsec is kept recoverable — losing it would be forever).
+            </>}
           </p>
         </div>
-        <button class="lc-pill-danger text-sm" onClick={() => setOpen(true)}>Remove this bot…</button>
+        <button class="lc-pill-danger text-sm" onClick={() => setOpen(true)}>{bot.official ? 'Reset this bot…' : 'Remove this bot…'}</button>
       </div>
 
       {open && (
@@ -243,7 +257,7 @@ function DangerZone({ bot }: { bot: Bot }) {
                 disabled={busy || typed.trim() !== short}
                 onClick={remove}
               >
-                {busy ? <span class="lc-spinner" /> : 'Remove forever'}
+                {busy ? <span class="lc-spinner" /> : bot.official ? 'Reset' : 'Remove forever'}
               </button>
             </div>
           </div>

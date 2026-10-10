@@ -4,6 +4,7 @@
 import { finalizeEvent } from 'nostr-tools';
 import { identityFromEnv } from '../lib/secret.mjs';
 import { createPool, parseGroupList } from '../lib/pool.mjs';
+import { advertiseCommands } from '../lib/commands.mjs';
 import { createStateStore } from '../lib/state.mjs';
 
 const PREFIX = 'empanadas-price-bot';
@@ -65,6 +66,7 @@ async function main() {
   const nsecEnv = process.env.EMPANADAS_PRICE_BOT_NSEC ? 'EMPANADAS_PRICE_BOT_NSEC' : 'BOT_NSEC';
   const { sk, pk, npub } = identityFromEnv(nsecEnv);
   const pool = createPool(sk);
+  const commandList = advertiseCommands({ pool, sk, relays: GROUPS.map((g) => g.relay), script: import.meta.url });
   const { loadState, saveState } = createStateStore({
     fileName: 'obelisk-empanadas-price-bot-state.json',
     envName: process.env.EMPANADAS_PRICE_BOT_STATE_PATH
@@ -169,7 +171,8 @@ async function main() {
     subscribe();
   }
 
-  const stop = () => {
+  const stop = async () => {
+    await commandList.stop();
     stopped = true;
     clearTimeout(timer);
     pool.close([...new Set([...RELAYS, ...GROUPS.map((group) => group.relay)])]);

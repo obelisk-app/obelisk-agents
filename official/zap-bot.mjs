@@ -27,6 +27,8 @@
 import { finalizeEvent, nip19 } from 'nostr-tools';
 import { identityFromEnv } from '../lib/secret.mjs';
 import { createPool, parseGroupList } from '../lib/pool.mjs';
+import { advertiseCommands } from '../lib/commands.mjs';
+import { hardBreaks } from '../lib/markdown.mjs';
 import { createGroupWatcher } from '../lib/group-watcher.mjs';
 import { createStateStore } from '../lib/state.mjs';
 import { ZAP_KINDS, zapCandidate } from '../lib/zaps.mjs';
@@ -84,10 +86,12 @@ function createSeenCache(max) {
 
 let shuttingDown = false;
 const cleanups = [];
-function onShutdown() {
+let commandList = null;
+async function onShutdown() {
   if (shuttingDown) return;
   shuttingDown = true;
   console.log('[zap-bot] shutting down…');
+  await commandList?.stop();
   for (const fn of cleanups) { try { fn(); } catch {} }
   setTimeout(() => process.exit(0), 500);
 }
@@ -111,6 +115,7 @@ async function main() {
   console.log(`[zap-bot] min sats:        ${MIN_SATS}`);
 
   const pool = createPool(sk);
+  commandList = advertiseCommands({ pool, sk, relays: [...STATIC_GROUPS.map((g) => g.relay), ...LISTEN_RELAYS], script: import.meta.url });
 
   process.on('SIGINT', onShutdown);
   process.on('SIGTERM', onShutdown);
@@ -224,7 +229,7 @@ async function main() {
       kind: 9,
       created_at: Math.floor(Date.now() / 1000),
       tags,
-      content,
+      content: hardBreaks(content),
     }, sk);
 
     try {

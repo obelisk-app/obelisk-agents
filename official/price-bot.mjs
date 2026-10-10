@@ -30,6 +30,8 @@
 import { finalizeEvent, nip19 } from 'nostr-tools';
 import { identityFromEnv } from '../lib/secret.mjs';
 import { createPool, parseGroupList } from '../lib/pool.mjs';
+import { advertiseCommands } from '../lib/commands.mjs';
+import { hardBreaks } from '../lib/markdown.mjs';
 import { createStateStore } from '../lib/state.mjs';
 
 const { loadState, saveState, statePath } = createStateStore({
@@ -95,8 +97,11 @@ function commandReply(cmd, s) {
   }
 }
 
-function sigTerm() {
+let commandList = null;
+
+async function sigTerm() {
   console.log('[price-bot] shutting down…');
+  await commandList?.stop();
   process.exit(0);
 }
 
@@ -115,6 +120,7 @@ async function main() {
   console.log(`[price-bot] interval:    ${INTERVAL}ms; chat every ${CHAT_EVERY_N} ticks`);
 
   const pool = createPool(sk);
+  commandList = advertiseCommands({ pool, sk, relays: GROUPS.map((g) => g.relay), script: import.meta.url });
 
   process.on('SIGINT', sigTerm);
   process.on('SIGTERM', sigTerm);
@@ -161,7 +167,7 @@ async function main() {
                   kind: 9,
                   created_at: Math.floor(Date.now() / 1000),
                   tags: [['h', groupId], ['e', ev.id], ['p', ev.pubkey]],
-                  content: reply,
+                  content: hardBreaks(reply),
                 },
                 sk,
               );

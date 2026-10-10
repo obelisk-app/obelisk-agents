@@ -215,7 +215,7 @@ function RunPanel({ onError }: { onError: (e: string) => void }) {
 
   const SUGGESTIONS = [
     'Audit every bot\'s logs for errors in the last hours and summarize what needs attention.',
-    'Review bots/zap-bot.mjs for reconnect / duplicate-message bugs and fix what you find.',
+    'Review official/zap-bot.mjs for reconnect / duplicate-message bugs and fix what you find.',
     'Update all bot profiles (kind 0) so their about fields describe their commands.',
   ]
 

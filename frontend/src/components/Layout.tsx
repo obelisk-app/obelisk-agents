@@ -6,8 +6,9 @@ import { useLogout, useSigner } from '@nostr-wot/ui'
 import type { NostrSigner } from '@nostr-wot/signers'
 import { api, Session } from '../api'
 import { clearStoredSigners } from '../auth'
-import { Avatar, Icon, profileName, shortNpub } from './ui'
+import { Avatar, CopyChip, Icon, profileName, shortNpub } from './ui'
 import { Logo } from './Logo'
+import { openNewBotWizard } from './Dashboard'
 
 // `description` is the terse line under the sidebar entry; `blurb` is the
 // fuller sentence in the page header. Both live here so each section is
@@ -58,6 +59,9 @@ export function Layout({ session, path, onLogout, children }: {
           </span>
         </a>
       ))}
+      <button class="lc-pill-primary w-full justify-center gap-2 !py-3 text-base font-bold mt-2" onClick={() => { setDrawer(false); openNewBotWizard() }}>
+        <Icon.plus /> New bot
+      </button>
     </nav>
   )
 
@@ -67,7 +71,9 @@ export function Layout({ session, path, onLogout, children }: {
       <div class="min-w-0 flex-1">
         <div class="text-sm font-semibold truncate">{name}</div>
         <div class="text-[11px] text-lc-muted font-mono truncate" title={session.npub}>
-          {session.profile?.nip05 ?? shortNpub(session.npub ?? null)}
+          {session.npub
+            ? <CopyChip text={session.npub} label={session.profile?.nip05 ?? shortNpub(session.npub)} />
+            : session.profile?.nip05}
         </div>
       </div>
       <button class="lc-icon-btn" title="Sign out" onClick={logout}><Icon.logout /></button>

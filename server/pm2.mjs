@@ -13,6 +13,10 @@ const require = createRequire(import.meta.url);
 
 const MANAGER_APP = 'obelisk-agents-manager';
 
+// The ecosystem file leaves out official bots that have no nsec yet; the
+// manager lists them anyway so the dashboard can turn them on.
+process.env.OBELISK_ECOSYSTEM_ALL = '1';
+
 export function ecosystemApps() {
   delete require.cache[require.resolve(ecosystemPath)];
   const { apps } = require(ecosystemPath);

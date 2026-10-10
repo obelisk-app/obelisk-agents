@@ -35,9 +35,28 @@ export interface Session {
   profile?: NostrProfile | null
 }
 
+export interface OfficialField {
+  key: string
+  label: string
+  default?: string
+}
+
+/** Catalog entry from official/catalog.json — set on bundled bots only. */
+export interface OfficialInfo {
+  id: string
+  title: string
+  description: string
+  notes?: string
+  relaysEnv: string
+  groupsEnv: string
+  extraEnv?: OfficialField[]
+  defaults?: { relays?: string }
+}
+
 export interface Bot {
   name: string
   kind: 'bot' | 'agent'
+  official: OfficialInfo | null
   commands: BotCommand[]
   script: string
   status: string
@@ -108,6 +127,18 @@ export const api = {
     }),
   botAction: (name: string, action: 'start' | 'stop' | 'restart') =>
     req<{ ok: boolean }>(`/api/bots/${name}/${action}`, { method: 'POST' }),
+  setupOfficial: (id: string, body: {
+    nsec?: string
+    generate?: boolean
+    relays?: string[]
+    groups?: string[]
+    env?: Record<string, string>
+    start?: boolean
+  }) =>
+    req<{ name: string; npub: string; started: boolean }>(`/api/official/${id}/setup`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
   removeBot: (name: string) =>
     req<{ removed: string }>(`/api/bots/${name}`, { method: 'DELETE' }),
   botLogs: (name: string, lines = 200) =>

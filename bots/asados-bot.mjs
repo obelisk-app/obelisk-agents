@@ -4,6 +4,7 @@
 import { finalizeEvent } from 'nostr-tools';
 import { identityFromEnv } from '../lib/secret.mjs';
 import { createPool, parseGroupList } from '../lib/pool.mjs';
+import { advertiseCommands } from '../lib/commands.mjs';
 import { createStateStore } from '../lib/state.mjs';
 import { createGroupWatcher } from '../lib/group-watcher.mjs';
 
@@ -67,6 +68,7 @@ async function main() {
   const nsecEnv = process.env.ASADOS_BOT_NSEC ? 'ASADOS_BOT_NSEC' : 'BOT_NSEC';
   const { sk, pk, npub } = identityFromEnv(nsecEnv);
   const pool = createPool(sk);
+  const commandList = advertiseCommands({ pool, sk, relays: [...GROUPS.map((g) => g.relay), ...LISTEN_RELAYS], script: import.meta.url });
   const { loadState, saveState } = createStateStore({
     fileName: 'obelisk-asados-bot-state.json',
     envName: process.env.ASADOS_BOT_STATE_PATH ? 'ASADOS_BOT_STATE_PATH' : 'BOT_STATE_PATH',
@@ -157,7 +159,8 @@ async function main() {
     if (!stopped) timer = setTimeout(schedule, Math.min(MAX_BACKOFF_MS, INTERVAL_MS * (2 ** failures)));
   };
 
-  const stop = () => {
+  const stop = async () => {
+    await commandList.stop();
     stopped = true;
     clearTimeout(timer);
     watcher?.stop();

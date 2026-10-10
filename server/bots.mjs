@@ -8,7 +8,7 @@ import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 import { getPublicKey, nip19 } from 'nostr-tools';
 import { repoRoot, envLocalPath, adminPubkeys } from './config.mjs';
-import { parseSecret } from '../lib/secret.mjs';
+import { parseSecret, newIdentity } from '../lib/secret.mjs';
 import { readEnvMap, readEnvEntries, applyEnvChanges } from './envfile.mjs';
 import { listBots, ecosystemApps, botAction } from './pm2.mjs';
 import { profilesFor, invalidateProfile, fetchRawProfile } from './profiles.mjs';
@@ -30,7 +30,24 @@ function scriptEnvVars(scriptPath) {
   }
 }
 
+// ── Official bots (official/catalog.json) ───────────────────────────────
+// Bundled with the repo, off until the host gives each one an identity.
+export function readCatalog() {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(repoRoot, 'official', 'catalog.json'), 'utf8')).bots ?? [];
+  } catch {
+    return [];
+  }
+}
+
+function officialFor(scriptPath) {
+  const id = scriptPath?.match(/^official\/([a-z0-9-]+)\.mjs$/)?.[1];
+  return id ? readCatalog().find((b) => b.id === id) ?? null : null;
+}
+
 function nsecEnvFor(app, env) {
+  const official = officialFor(app.script);
+  if (official) return official.nsecEnv;
   const prefix = envPrefix(app.script);
   if (env[`${prefix}_NSEC`] !== undefined) return `${prefix}_NSEC`;
   const declared = scriptEnvVars(app.script).find((v) => v.endsWith('_NSEC'));
@@ -103,6 +120,8 @@ export async function botsOverview() {
     return {
       ...proc,
       kind: botKind(app.script),
+      official: (({ id, title, description, notes, relaysEnv, groupsEnv, extraEnv, defaults } = {}) =>
+        id ? { id, title, description, notes, relaysEnv, groupsEnv, extraEnv, defaults } : null)(officialFor(app.script) ?? {}),
       commands: commandsFor(app.script),
       nsecEnv,
       ...identityFor(nsecEnv, env),
@@ -149,6 +168,60 @@ export async function scaffoldBot(rawName, {
   return { name, npub, nsecEnv: `${prefix}_NSEC`, prefix, kind, script: `bots/${name}.mjs` };
 }
 
+// An official bot never starts without its own identity — the dashboard
+// opens the setup form instead.
+export function assertStartable(name) {
+  const app = ecosystemApps().find((a) => a.name === name);
+  const official = app && officialFor(app.script);
+  if (official && !readEnvMap()[official.nsecEnv]) {
+    throw new Error(`${official.title} has no identity yet (${official.nsecEnv}) — turn it on from the dashboard to set one`);
+  }
+}
+
+// Turn on an official bot: give it an identity (pasted or generated — the
+// nsec goes straight into .env.local, only the npub comes back), its
+// relays/groups and extra settings, then start it. Re-running it on a
+// configured bot only updates the env it was given.
+export async function setupOfficial(id, {
+  nsec = '', generate = false, relays = [], groups = [], env: extra = {}, start = true,
+} = {}, adminNpub = null) {
+  const bot = readCatalog().find((b) => b.id === id);
+  if (!bot) throw new Error(`unknown official bot: ${id}`);
+  const current = readEnvMap();
+  const set = {};
+  let npub;
+  if (String(nsec).trim()) {
+    const sk = parseSecret(String(nsec).trim());
+    set[bot.nsecEnv] = nip19.nsecEncode(sk);
+    npub = nip19.npubEncode(getPublicKey(sk));
+  } else if (generate) {
+    const fresh = newIdentity();
+    set[bot.nsecEnv] = fresh.nsec;
+    npub = fresh.npub;
+  } else if (current[bot.nsecEnv]) {
+    npub = identityFor(bot.nsecEnv, current).npub;
+  } else {
+    throw new Error(`${bot.title} needs an identity — paste an nsec or generate one`);
+  }
+  const list = (v) => (Array.isArray(v) ? v : String(v ?? '').split(','))
+    .map((x) => String(x).trim()).filter(Boolean).join(',');
+  if (list(relays)) set[bot.relaysEnv] = list(relays);
+  if (list(groups)) set[bot.groupsEnv] = list(groups);
+  for (const field of bot.extraEnv ?? []) {
+    const given = extra?.[field.key];
+    const value = given !== undefined && String(given).trim() !== ''
+      ? String(given).trim()
+      : current[field.key] ? null : field.default === '$ADMIN' ? adminNpub : field.default;
+    if (value) set[field.key] = value;
+  }
+  applyEnvChanges({ set });
+  const name = `obelisk-${bot.id}`;
+  if (start) {
+    await botAction(name, 'restart').catch(() => botAction(name, 'start'));
+  }
+  return { name, npub, nsecEnv: bot.nsecEnv, started: !!start };
+}
+
 // Prompt handed to the Operator (Codex) right after scaffolding, so the
 // agent implements the bot's actual behavior — data sources / scraping,
 // chat interactions, intervals — against the configured relays/groups.
@@ -189,6 +262,7 @@ export function buildPrompt({ name, prefix, description, relays, groups, kind = 
     `- REQUIRED: write bots/${name}.commands.json describing every chat command the bot answers:`,
     `  {"commands": [{"command": "!x", "description": "what it does / triggers", "example": "!x arg"}]}`,
     `  (empty "commands" array + a "note" field if the bot has no commands). The panel shows this to the admin.`,
+    `- REQUIRED for bots not built on runAgent(): right after createPool(sk), call advertiseCommands({ pool, sk, relays: <the group relays it answers on>, script: import.meta.url }) from lib/commands.mjs, and await its .stop() in the SIGINT/SIGTERM handler — that publishes the command list for the dex's / picker (see docs/building-bots.md "Command bots")`,
     `Do not touch other bots. Do not commit.`,
   ].join('\n');
 }
@@ -297,6 +371,17 @@ export async function announceActive(name) {
 // commented out — never deleted, an nsec is unrecoverable otherwise.
 export async function removeBot(name) {
   const app = ecosystemAppOrThrow(name);
+  const official = officialFor(app.script);
+  if (official) {
+    // Official source and catalog stay; only this host's identity and
+    // settings go (commented out), which turns the bot back off.
+    await execFileP('pm2', ['delete', name]).catch(() => {});
+    await execFileP('pm2', ['save', '--force']).catch(() => {});
+    const keys = [official.nsecEnv, official.relaysEnv, official.groupsEnv, ...(official.extraEnv ?? []).map((f) => f.key)]
+      .filter((k) => readEnvMap()[k] !== undefined && k !== 'BOT_RELAYS' && k !== 'BOT_GROUPS');
+    if (keys.length) applyEnvChanges({ unset: keys });
+    return { removed: name, archivedTo: null, envCommented: keys, official: true };
+  }
   await execFileP('pm2', ['delete', name]).catch(() => {});
   await execFileP('pm2', ['save', '--force']).catch(() => {});
 

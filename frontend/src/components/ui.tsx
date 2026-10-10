@@ -36,15 +36,16 @@ export function CopyChip({ text, label }: { text: string; label: string }) {
   const [copied, setCopied] = useState(false)
   return (
     <button
-      class="font-mono text-xs text-lc-muted hover:text-lc-green transition-colors"
-      title={text}
+      type="button"
+      class="inline-flex items-center gap-1 font-mono text-xs text-lc-muted hover:text-lc-green transition-colors"
+      title={`Copy ${text}`}
       onClick={() => {
         navigator.clipboard.writeText(text)
         setCopied(true)
         setTimeout(() => setCopied(false), 1200)
       }}
     >
-      {copied ? '✓ copied' : label}
+      {copied ? '✓ copied' : <>{label}<Icon.copy /></>}
     </button>
   )
 }
@@ -142,4 +143,5 @@ export const Icon = {
   restart: () => <svg {...iconBase} width={14} height={14}><path d="M20 11a8 8 0 10-2.3 5.7M20 5v6h-6" /></svg>,
   bolt: () => <svg {...iconBase} width={14} height={14}><path d="M13 2L4 14h7l-1 8 9-12h-7z" /></svg>,
   menu: () => <svg {...iconBase}><path d="M4 7h16M4 12h16M4 17h16" /></svg>,
+  copy: () => <svg {...iconBase} width={12} height={12}><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15H4a1 1 0 01-1-1V4a1 1 0 011-1h10a1 1 0 011 1v1" /></svg>,
 }

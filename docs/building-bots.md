@@ -160,8 +160,17 @@ Replaceable kinds (`0`, `39xxx`): relays keep only the newest per
 ### Mentions and replies (kind 9 content)
 
 - Mention a user: put `nostr:npub1…` in `content` — Obelisk clients
-  render it as a profile link (see `bots/zap-bot.mjs` for npub encoding).
+  render it as a profile link (see `official/zap-bot.mjs` for npub encoding).
 - Reply to a message: add `['e', parentEventId]` alongside the `h` tag.
+
+### Multi-line replies
+
+The Obelisk dex renders kind 9 content as Markdown **without soft breaks**:
+a single `\n` collapses into a space (so a ranking turns into one long
+line). Pass outgoing content through `hardBreaks()` from `lib/markdown.mjs`.
+It turns single newlines into Markdown hard breaks and leaves blank lines
+and ``` blocks alone. Do it once, at the bot's publish function, so every
+command is covered.
 
 ### Dynamic group discovery
 
@@ -184,6 +193,34 @@ if (handler) publishTo(groupOf(ev), await handler());
 
 Throttle: never answer the same command twice within a few seconds
 (spam-loop protection when two bots answer each other).
+
+**Advertise the commands.** List them in `bots/<name>.commands.json`
+(`{"commands":[{"command":"!x","description":"…","example":"!x arg"}]}`)
+and call `advertiseCommands` once the pool exists. Clients like the dex
+read the list to show the bot's commands in their `/` picker:
+
+```js
+import { advertiseCommands } from '../lib/commands.mjs';
+const commandList = advertiseCommands({ pool, sk, relays: GROUPS.map((g) => g.relay), script: import.meta.url });
+// in the SIGINT/SIGTERM handler, before pool.close / exit:
+await commandList.stop();   // publishes an empty list so clients drop it
+```
+
+It publishes one kind `30078` replaceable event per relay, signed by
+the bot, and republishes every 20 min. Clients treat a list older than
+1 h as a dead bot.
+
+| tag | value |
+|---|---|
+| `d` | `obelisk:bot-commands:<relayUrl>` (one slot per relay) |
+| `t` | `obelisk-bot-commands` (discovery: `{"kinds":[30078],"#t":["obelisk-bot-commands"]}`) |
+| `cmd` | `["cmd", "!x", "<description>", "<example>"]`, one per command |
+| `alt` | `Obelisk bot command list` |
+
+The content repeats the list as JSON:
+`{"v":1,"name":"<bot>","commands":[…]}`. Pass the relays where the bot
+answers in groups, not profile relays like damus. `runAgent()` does all
+of this for you.
 
 ## 4. State that survives restarts
 
@@ -227,3 +264,21 @@ outside git.
    file, stop — it exists in `lib/pool.mjs`.
 5. **A bot only publishes kinds it's documented to publish.** Admin
    kinds (9000+) require an explicit human decision to grant the role.
+
+## 7. Official bots (`official/`)
+
+`official/` holds the bundled bots every host gets: `zap-bot`,
+`lacrypta-ranks` and `price-bot`. Their metadata is in
+`official/catalog.json`: the nsec/relays/groups env keys and extra
+settings. `ecosystem.config.cjs` generates their PM2 stanzas from the
+catalog and registers each one **only once its nsec is set** in
+`.env.local`. On a fresh clone they are off.
+
+- On the dashboard, an unconfigured official bot shows **Turn on**. That
+  sets its identity (generate a new one, or paste your own nsec), relays,
+  groups and extras, then starts it (`POST /api/official/<id>/setup`).
+- After that, use Stop / Start as usual. **Reset** in the bot's danger
+  zone comments out its keys. The source stays.
+- Don't create bots in `official/`. Codex-made and local bots go in
+  `bots/`. To make a bot official, move it there and add a catalog entry.
+

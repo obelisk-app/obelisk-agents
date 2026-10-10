@@ -7,7 +7,7 @@
 > `⚡` reactions are observed on the relays and are skipped because the
 > announcement template needs a parseable amount.
 
-`bots/zap-bot.mjs` — listens for [NIP-57](https://github.com/nostr-protocol/nips/blob/master/57.md)
+`official/zap-bot.mjs` — listens for [NIP-57](https://github.com/nostr-protocol/nips/blob/master/57.md)
 zap receipts plus zap-like reactions in NIP-29 groups and announces them
 in chat:
 
@@ -117,7 +117,7 @@ pm2 logs obelisk-zap-bot
 Foreground (debugging):
 
 ```bash
-node --env-file-if-exists=.env.local bots/zap-bot.mjs
+node --env-file-if-exists=.env.local official/zap-bot.mjs
 # or:
 npm run zap-bot
 ```

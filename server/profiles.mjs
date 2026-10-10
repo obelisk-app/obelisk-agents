@@ -65,13 +65,27 @@ function pick(meta) {
   };
 }
 
+// Collects events as they arrive and settles at EOSE from every relay or
+// at the timeout — whichever comes first — so one slow relay can't discard
+// what the fast ones already returned.
+function collect(pool, relays, filter) {
+  return new Promise((resolve) => {
+    const events = [];
+    let sub;
+    const done = () => {
+      clearTimeout(timer);
+      try { sub?.close(); } catch {}
+      resolve(events);
+    };
+    const timer = setTimeout(done, QUERY_TIMEOUT_MS);
+    sub = pool.subscribe(relays, filter, { onevent: (ev) => events.push(ev), oneose: done });
+  });
+}
+
 async function refresh(pubkeys) {
   const pool = new SimplePool();
   try {
-    const events = await Promise.race([
-      pool.querySync(PROFILE_RELAYS, { kinds: [0], authors: pubkeys }),
-      new Promise((resolve) => setTimeout(() => resolve([]), QUERY_TIMEOUT_MS)),
-    ]);
+    const events = await collect(pool, PROFILE_RELAYS, { kinds: [0], authors: pubkeys });
     const newest = new Map();
     for (const ev of events) {
       if (!newest.has(ev.pubkey) || newest.get(ev.pubkey).created_at < ev.created_at) newest.set(ev.pubkey, ev);
@@ -130,10 +144,7 @@ export function invalidateProfile(pubkey, profile) {
 export async function fetchRawProfile(pubkey) {
   const pool = new SimplePool();
   try {
-    const events = await Promise.race([
-      pool.querySync(PROFILE_RELAYS, { kinds: [0], authors: [pubkey] }),
-      new Promise((resolve) => setTimeout(() => resolve([]), QUERY_TIMEOUT_MS)),
-    ]);
+    const events = await collect(pool, PROFILE_RELAYS, { kinds: [0], authors: [pubkey] });
     const newest = events.sort((a, b) => b.created_at - a.created_at)[0];
     if (!newest) return {};
     const raw = JSON.parse(newest.content);

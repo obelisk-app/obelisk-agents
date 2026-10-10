@@ -1,0 +1,46 @@
+{
+  "note": "Official Obelisk bots. ecosystem.config.cjs registers each one only once its nsecEnv is set in .env.local (off by default on a fresh host); the manager lists them all and turns them on from the dashboard.",
+  "bots": [
+    {
+      "id": "zap-bot",
+      "title": "Zap bot",
+      "description": "Announces every NIP-57 zap that happens inside your NIP-29 groups.",
+      "nsecEnv": "ZAP_BOT_NSEC",
+      "relaysEnv": "ZAP_BOT_RELAYS",
+      "groupsEnv": "ZAP_BOT_GROUPS",
+      "defaults": { "relays": "wss://public.obelisk.ar" },
+      "extraEnv": [
+        { "key": "ZAP_BOT_LISTEN_RELAYS", "label": "Extra relays to listen for zap receipts (comma-separated)" },
+        { "key": "ZAP_BOT_MIN_SATS", "label": "Minimum sats to announce", "default": "1" }
+      ],
+      "notes": "Empty groups = every group on the relays the bot can see."
+    },
+    {
+      "id": "lacrypta-ranks",
+      "title": "Ranks bot",
+      "description": "XP, levels, fortnightly ranking, jury votes and padrinos (port of La Crypta's Discord ranks bot).",
+      "nsecEnv": "LACRYPTA_RANKS_NSEC",
+      "relaysEnv": "LACRYPTA_RANKS_RELAYS",
+      "groupsEnv": "LACRYPTA_RANKS_GROUPS",
+      "defaults": { "relays": "wss://public.obelisk.ar" },
+      "extraEnv": [
+        { "key": "LACRYPTA_RANKS_ADMINS", "label": "Admin npubs (comma-separated; default: you)", "default": "$ADMIN" },
+        { "key": "LACRYPTA_RANKS_PRIZES", "label": "Prizes in sats for top 3", "default": "5000,3000,1500" }
+      ],
+      "notes": "The relay must whitelist the bot's npub. Then send !canal-niveles in the channel that should receive level-up messages."
+    },
+    {
+      "id": "price-bot",
+      "title": "BTC price bot",
+      "description": "BTC/USD ticker in its profile name, periodic summaries, and !btc / !price / !ath / !stats.",
+      "nsecEnv": "BOT_NSEC",
+      "relaysEnv": "BOT_RELAYS",
+      "groupsEnv": "BOT_GROUPS",
+      "defaults": { "relays": "wss://public.obelisk.ar" },
+      "extraEnv": [
+        { "key": "BOT_INTERVAL_MS", "label": "Price refresh interval (ms)", "default": "120000" }
+      ],
+      "notes": "Reads the fleet-wide BOT_* keys."
+    }
+  ]
+}

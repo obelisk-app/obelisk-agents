@@ -371,7 +371,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 /* ── Bot cards ── */
 .lc-bot-card:hover { border-color: #3d4d24; transform: translateY(-2px); }
 .lc-bot-banner {
-  height: 72px; background-size: cover; background-position: center;
+  height: 72px; border-radius: inherit; border-bottom-left-radius: 0; border-bottom-right-radius: 0; background-size: cover; background-position: center;
   background-color: #111;
   background-image:
     radial-gradient(circle at 20% 0%, rgba(180,249,83,0.18), transparent 60%),

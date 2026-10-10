@@ -1,7 +1,8 @@
 // PM2 ecosystem config for Obelisk bots.
 //
-// Each entry is a long-running bot process. Add new entries below as you
-// scaffold bots with `npm run new-bot -- <name>`.
+// Each entry is a long-running bot process. Official bots come from
+// official/catalog.json (see officialApps below); add your own entries
+// below as you scaffold bots with `npm run new-bot -- <name>`.
 //
 // Start / reload:
 //   pm2 start ecosystem.config.js && pm2 save
@@ -19,31 +20,47 @@ const baseEnv = {
   OBELISK_AGENTS_STATE_DIR: stateDir,
 };
 
-module.exports = {
-  apps: [
-    {
-      name: 'obelisk-price-bot',
-      script: 'bots/price-bot.mjs',
+// Official bots (official/catalog.json) are off by default: each one is
+// registered only once its nsec is set in .env.local, so a fresh clone's
+// `pm2 start ecosystem.config.cjs` starts nothing with a missing identity.
+// The manager sets OBELISK_ECOSYSTEM_ALL=1 to list them all and turns them
+// on from the dashboard.
+const fs = require('node:fs');
+const path = require('node:path');
+const { parseEnv } = require('node:util');
+
+function localEnv() {
+  try {
+    return parseEnv(fs.readFileSync(path.join(cwd, '.env.local'), 'utf8'));
+  } catch {
+    return {};
+  }
+}
+
+function officialApps() {
+  const { bots } = JSON.parse(fs.readFileSync(path.join(cwd, 'official/catalog.json'), 'utf8'));
+  const env = localEnv();
+  const all = process.env.OBELISK_ECOSYSTEM_ALL === '1';
+  return bots
+    .filter((b) => all || env[b.nsecEnv])
+    .map((b) => ({
+      name: `obelisk-${b.id}`,
+      script: `official/${b.id}.mjs`,
       cwd,
       node_args: nodeArgs,
       watch: false,
       autorestart: true,
       max_restarts: 10,
       env: baseEnv,
-    },
+    }));
+}
+
+module.exports = {
+  apps: [
+    ...officialApps(),
     {
       name: 'obelisk-sat-ars-bot',
       script: 'bots/sat-ars-bot.mjs',
-      cwd,
-      node_args: nodeArgs,
-      watch: false,
-      autorestart: true,
-      max_restarts: 10,
-      env: baseEnv,
-    },
-    {
-      name: 'obelisk-zap-bot',
-      script: 'bots/zap-bot.mjs',
       cwd,
       node_args: nodeArgs,
       watch: false,
@@ -74,16 +91,6 @@ module.exports = {
     {
       name: 'obelisk-asados-bot',
       script: 'bots/asados-bot.mjs',
-      cwd,
-      node_args: nodeArgs,
-      watch: false,
-      autorestart: true,
-      max_restarts: 10,
-      env: baseEnv,
-    },
-    {
-      name: 'obelisk-lacrypta-ranks',
-      script: 'bots/lacrypta-ranks.mjs',
       cwd,
       node_args: nodeArgs,
       watch: false,

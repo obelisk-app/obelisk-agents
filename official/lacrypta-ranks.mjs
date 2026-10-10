@@ -15,7 +15,7 @@
 //   • !jurado: 24h community vote (min 5 votes) to cut an abuser's XP
 //   • Padrino system: one padrino per member, one ahijado per padrino, no cycles
 //
-// Commands: see bots/lacrypta-ranks.commands.json or `!rangos` in chat.
+// Commands: see official/lacrypta-ranks.commands.json or `!rangos` in chat.
 //
 // Config (all optional except the nsec):
 //   LACRYPTA_RANKS_NSEC            identity
@@ -35,6 +35,8 @@
 import { finalizeEvent, getPublicKey, nip19 } from 'nostr-tools';
 import { identityFromEnv, parsePubkey, parseSecret } from '../lib/secret.mjs';
 import { createPool, parseGroupList } from '../lib/pool.mjs';
+import { advertiseCommands } from '../lib/commands.mjs';
+import { hardBreaks } from '../lib/markdown.mjs';
 import { createGroupWatcher } from '../lib/group-watcher.mjs';
 import { createStateStore } from '../lib/state.mjs';
 import { ZAP_KINDS, isZapReaction, tagValue, zapCandidate } from '../lib/zaps.mjs';
@@ -158,6 +160,7 @@ async function main() {
   const nsecEnv = process.env.LACRYPTA_RANKS_NSEC ? 'LACRYPTA_RANKS_NSEC' : 'BOT_NSEC';
   const { sk, pk, npub } = identityFromEnv(nsecEnv);
   const pool = createPool(sk);
+  const commandList = advertiseCommands({ pool, sk, relays: [...RELAYS, ...STATIC_GROUPS.map((g) => g.relay), ...LISTEN_RELAYS], script: import.meta.url });
   const { loadState, saveState, statePath } = createStateStore({
     fileName: 'obelisk-lacrypta-ranks-state.json',
     envName: 'LACRYPTA_RANKS_STATE_PATH',
@@ -222,7 +225,7 @@ async function main() {
     const ps = new Set([...(reply ? [reply.pubkey] : []), ...mentionedPubkeys(content)]);
     ps.delete(pk);
     for (const p of ps) tags.push(['p', p]);
-    const ev = finalizeEvent({ kind: 9, created_at: Math.floor(Date.now() / 1000), tags, content }, sk);
+    const ev = finalizeEvent({ kind: 9, created_at: Math.floor(Date.now() / 1000), tags, content: hardBreaks(content) }, sk);
     try {
       await Promise.any(pool.publish([relay], ev));
       return ev;
@@ -316,10 +319,11 @@ async function main() {
     const jury = c.juries.find((j) => j.status === 'active' && j.eventId === target);
     if (jury) {
       const vote = /^(\+|👍|✅)/u.test(ev.content) ? 'for' : /^(-|👎|❌)/u.test(ev.content) ? 'against' : null;
-      if (vote && ev.pubkey !== jury.accused && !ignored.has(ev.pubkey)) {
+      if (vote && ev.pubkey !== jury.accused && !ignored.has(ev.pubkey) && jury.votes[ev.pubkey] !== vote) {
         jury.votes[ev.pubkey] = vote;
         persist();
         console.log(`[${PREFIX}] jury ${jury.id} vote ${vote} by ${ev.pubkey.slice(0, 8)}`);
+        announceTally(relay, jury);
       }
       return;
     }
@@ -420,6 +424,22 @@ async function main() {
       + `\n👍 A favor: **${forN}** · 👎 En contra: **${againstN}**\n`
       + `🗳️ Quórum: **${votes.length}/${JURY_MIN_VOTES}**${missing && j.status === 'active' ? ` (faltan ${missing})` : ''}\n`
       + (j.status === 'active' ? `⏰ ${Math.floor(left / 3_600_000)}h ${Math.floor((left % 3_600_000) / 60_000)}m restantes` : '⏰ CERRADA');
+  }
+
+  // Reaction votes are silent otherwise; reply with the tally, batched so a
+  // burst of reactions yields one message. No mentions, so nobody gets pinged.
+  const tallyTimers = new Map();
+  function announceTally(relay, j) {
+    if (tallyTimers.has(j.id)) return;
+    tallyTimers.set(j.id, setTimeout(async () => {
+      tallyTimers.delete(j.id);
+      if (j.status !== 'active') return;
+      const votes = Object.values(j.votes);
+      const forN = votes.filter((v) => v === 'for').length;
+      const missing = Math.max(0, JURY_MIN_VOTES - votes.length);
+      await post(relay, j.group, `🗳️ Jurado #${j.id}: 👍 **${forN}** · 👎 **${votes.length - forN}** · quórum **${votes.length}/${JURY_MIN_VOTES}**${missing ? ` (faltan ${missing})` : ''}`,
+        j.eventId ? { id: j.eventId, pubkey: pk } : null);
+    }, 30_000));
   }
 
   async function closeJury(relay, j) {
@@ -810,7 +830,8 @@ async function main() {
     console.log(`[${PREFIX}] alive — ${subs.size} groups; ${summary}`);
   }, 300_000);
 
-  const stop = () => {
+  const stop = async () => {
+    await commandList.stop();
     clearInterval(tickTimer);
     clearInterval(heartbeat);
     watcher?.stop();

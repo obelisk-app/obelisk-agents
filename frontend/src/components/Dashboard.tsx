@@ -2,18 +2,36 @@ import { useEffect, useState } from 'preact/hooks'
 import { route } from 'preact-router'
 import { api, ActivityRun, AgentStatus, Bot, Script } from '../api'
 import { toast } from './toast'
+import { OfficialSetup } from './OfficialSetup'
 import { Avatar, CopyChip, Icon, Section, fmtMem, fmtUptime, profileMissing, profileName, shortNpub, timeAgo } from './ui'
 
 type Filter = 'all' | 'online' | 'stopped' | 'agents'
+
+// The sidebar's New bot button can be pressed from any page: it routes to
+// the fleet and opens the wizard there (immediately, or once it mounts).
+let pendingWizard = false
+let openWizard: (() => void) | null = null
+export function openNewBotWizard() {
+  if (openWizard) openWizard()
+  else pendingWizard = true
+  route('/')
+}
 
 export function Dashboard(_props: { path?: string }) {
   const [bots, setBots] = useState<Bot[] | null>(null)
   const [busy, setBusy] = useState('')
   const [wizard, setWizard] = useState(false)
+  const [setup, setSetup] = useState<Bot | null>(null)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
 
   const refresh = () => api.bots().then(setBots).catch((e) => toast.err(e.message))
+
+  useEffect(() => {
+    openWizard = () => setWizard(true)
+    if (pendingWizard) { pendingWizard = false; setWizard(true) }
+    return () => { openWizard = null }
+  }, [])
 
   useEffect(() => {
     refresh()
@@ -49,10 +67,6 @@ export function Dashboard(_props: { path?: string }) {
 
   return (
     <div class="animate-fade-in-up">
-      <div class="flex justify-end mb-6">
-        <button class="lc-pill-primary gap-1.5" onClick={() => setWizard(true)}><Icon.plus /> New bot</button>
-      </div>
-
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <Stat label="Online" value={bots ? online : '—'} accent={online > 0} />
         <Stat label="Stopped" value={bots ? bots.length - online : '—'} />
@@ -84,7 +98,7 @@ export function Dashboard(_props: { path?: string }) {
       ) : (
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {shown.map((bot) => (
-            <BotCard key={bot.name} bot={bot} busy={busy} onAct={act} />
+            <BotCard key={bot.name} bot={bot} busy={busy} onAct={act} onSetup={setSetup} />
           ))}
         </div>
       )}
@@ -93,6 +107,7 @@ export function Dashboard(_props: { path?: string }) {
       <ScriptsInventory />
 
       {wizard && <NewBotWizard onClose={() => setWizard(false)} onDone={refresh} />}
+      {setup && <OfficialSetup bot={setup} onClose={() => setSetup(null)} onDone={refresh} />}
     </div>
   )
 }
@@ -204,11 +219,14 @@ function ScriptsInventory() {
   )
 }
 
-function BotCard({ bot, busy, onAct }: {
+function BotCard({ bot, busy, onAct, onSetup }: {
   bot: Bot
   busy: string
   onAct: (name: string, action: 'start' | 'stop' | 'restart') => void
+  onSetup: (bot: Bot) => void
 }) {
+  // Official bots ship off: no identity until the host turns them on.
+  const needsSetup = !!bot.official && !bot.npub
   const [confirmStop, setConfirmStop] = useState(false)
   const short = bot.name.replace(/^obelisk-/, '')
   const title = profileName(bot.profile, short)
@@ -220,15 +238,17 @@ function BotCard({ bot, busy, onAct }: {
   }, [confirmStop])
 
   return (
-    <div class="lc-card lc-bot-card flex flex-col cursor-pointer overflow-hidden" onClick={() => route(`/bots/${bot.name}`)}>
+    <div class="lc-card lc-bot-card flex flex-col cursor-pointer relative" onClick={() => route(`/bots/${bot.name}`)}>
       <div class="lc-bot-banner" style={bot.profile?.banner ? { backgroundImage: `url("${bot.profile.banner}")` } : undefined} />
       <div class="px-5 pb-5 flex flex-col gap-3 flex-1">
-        <div class="flex items-end gap-3 -mt-8">
+        <div class="flex items-end gap-3 -mt-8 relative">
+          <BotMenu bot={bot} busy={busy} needsSetup={needsSetup} onAct={onAct} onSetup={onSetup} />
           <Avatar picture={bot.profile?.picture} label={short} size={64} status={bot.status} />
           <div class="min-w-0 pb-1 flex-1">
             <div class="font-bold truncate flex items-center gap-2" title={title}>
               {title}
               {bot.kind === 'agent' && <span class="lc-tag">AGENT</span>}
+              {bot.official && <span class="lc-tag" title={bot.official.description}>OFFICIAL</span>}
             </div>
             <div class="text-xs text-lc-muted truncate">
               {title !== short && <span class="font-mono">{short} · </span>}
@@ -239,13 +259,17 @@ function BotCard({ bot, busy, onAct }: {
         </div>
 
         <p class="text-sm text-lc-muted line-clamp-2 min-h-[2.5rem]">
-          {bot.profile?.about ?? <span class="italic text-lc-muted/50">No Nostr profile yet — publish one from the bot page.</span>}
+          {bot.profile?.about ?? (needsSetup
+            ? bot.official!.description
+            : <span class="italic text-lc-muted/50">No Nostr profile yet — publish one from the bot page.</span>)}
         </p>
 
         <div class="flex flex-wrap gap-1.5 text-[11px]" onClick={(e) => e.stopPropagation()}>
           {bot.npub
             ? <span class="lc-chip"><CopyChip text={bot.npub} label={shortNpub(bot.npub)} /></span>
-            : <span class="lc-chip !text-red-400">no nsec ({bot.nsecEnv})</span>}
+            : needsSetup
+              ? <span class="lc-chip">off · needs an identity</span>
+              : <span class="lc-chip !text-red-400">no nsec ({bot.nsecEnv})</span>}
           {bot.commands.length > 0 && <span class="lc-chip">{bot.commands.length} command{bot.commands.length === 1 ? '' : 's'}</span>}
           <span class="lc-chip">{bot.cpu ?? 0}% · {fmtMem(bot.memory)}</span>
           {bot.restarts > 0 && <span class="lc-chip">↻ {bot.restarts}</span>}
@@ -274,15 +298,75 @@ function BotCard({ bot, busy, onAct }: {
                 <Icon.stop /> {busy === bot.name + 'stop' ? '…' : confirmStop ? 'Sure?' : 'Stop'}
               </button>
             </>
+          ) : needsSetup ? (
+            <button class="lc-pill-primary text-xs !px-3 !py-1.5 gap-1" disabled={!!busy}
+              onClick={() => onSetup(bot)}>
+              <Icon.play /> Turn on
+            </button>
           ) : (
             <button class="lc-pill-primary text-xs !px-3 !py-1.5 gap-1" disabled={!!busy}
               onClick={() => onAct(bot.name, 'start')}>
               <Icon.play /> {busy === bot.name + 'start' ? '…' : 'Start'}
             </button>
           )}
-          <span class="ml-auto text-xs text-lc-muted group-hover:text-lc-green">Manage →</span>
+          <button class="ml-auto lc-pill-secondary text-xs !px-3 !py-1.5 !text-lc-white" onClick={() => route(`/bots/${bot.name}`)}>
+            Manage →
+          </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+// ⋯ menu on a bot card: the actions the card has room for and then some.
+function BotMenu({ bot, busy, needsSetup, onAct, onSetup }: {
+  bot: Bot
+  busy: string
+  needsSetup: boolean
+  onAct: (name: string, action: 'start' | 'stop' | 'restart') => void
+  onSetup: (bot: Bot) => void
+}) {
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    const close = () => setOpen(false)
+    window.addEventListener('click', close)
+    return () => window.removeEventListener('click', close)
+  }, [open])
+
+  const item = (label: string, run: () => void, danger = false, disabled = false) => (
+    <button type="button" disabled={disabled}
+      class={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-lc-olive-dark/60 disabled:opacity-40 ${danger ? 'text-red-400' : ''}`}
+      onClick={(e) => { e.stopPropagation(); setOpen(false); run() }}>
+      {label}
+    </button>
+  )
+  const go = (hash = '') => route(`/bots/${bot.name}${hash}`)
+  const online = bot.status === 'online'
+
+  return (
+    <div class="absolute right-0 top-10 z-10" onClick={(e) => e.stopPropagation()}>
+      <button type="button" class="lc-icon-btn !w-8 !h-8 text-lg leading-none" title="Actions" aria-label="Actions"
+        onClick={() => setOpen(!open)}>⋯</button>
+      {open && (
+        <div class="absolute right-0 mt-1 w-48 lc-card p-1 shadow-xl animate-fade-in-up">
+          {needsSetup
+            ? item('Turn on…', () => onSetup(bot))
+            : online
+              ? <>{item('Restart', () => onAct(bot.name, 'restart'), false, !!busy)}{item('Stop', () => onAct(bot.name, 'stop'), true, !!busy)}</>
+              : item('Start', () => onAct(bot.name, 'start'), false, !!busy)}
+          <div class="my-1 border-t border-lc-border" />
+          {item('Overview', () => go())}
+          {item('Settings', () => go('#settings'))}
+          {item('Nostr profile', () => go('#profile'))}
+          {item('Logs', () => go('#logs'))}
+          {bot.npub && <>
+            <div class="my-1 border-t border-lc-border" />
+            {item('Copy npub', () => { navigator.clipboard.writeText(bot.npub!); toast.ok('npub copied') })}
+          </>}
+        </div>
+      )}
     </div>
   )
 }

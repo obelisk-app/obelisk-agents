@@ -100,8 +100,22 @@ route('DELETE', /^\/api\/bots\/([\w-]+)$/, async (req, res, m) => {
 });
 
 route('POST', /^\/api\/bots\/([\w-]+)\/(start|stop|restart)$/, async (req, res, m) => {
+  if (m[2] !== 'stop') (await import('./bots.mjs')).assertStartable(m[1]);
   await botAction(m[1], m[2]);
   json(res, 200, { ok: true });
+});
+
+// Official bots (official/catalog.json): set an identity + config, start.
+route('POST', /^\/api\/official\/([a-z0-9-]+)\/setup$/, async (req, res, m, body) => {
+  const { setupOfficial } = await import('./bots.mjs');
+  json(res, 200, await setupOfficial(m[1], {
+    nsec: String(body?.nsec ?? ''),
+    generate: !!body?.generate,
+    relays: Array.isArray(body?.relays) ? body.relays : [],
+    groups: Array.isArray(body?.groups) ? body.groups : [],
+    env: body?.env && typeof body.env === 'object' ? body.env : {},
+    start: body?.start !== false,
+  }, sessionFor(req)?.npub ?? null));
 });
 
 route('GET', /^\/api\/bots\/([\w-]+)\/logs$/, async (req, res, m, body, url) =>

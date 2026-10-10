@@ -1,6 +1,6 @@
 # Price Bot
 
-`bots/price-bot.mjs` — multi-relay, multi-group BTC bot. Publishes BTC
+`official/price-bot.mjs` — multi-relay, multi-group BTC bot. Publishes BTC
 market data as kind:0 metadata (display name = `BTC $123,456`), posts a
 kind 9 hello + slash-command listener into each configured group, and
 optionally pushes periodic kind 9 price summaries.
@@ -66,7 +66,7 @@ short to avoid notification spam.
 Direct (foreground, debugging):
 
 ```bash
-node --env-file-if-exists=.env.local bots/price-bot.mjs
+node --env-file-if-exists=.env.local official/price-bot.mjs
 ```
 
 PM2 (production, what `obelisk-price-bot` runs):
@@ -74,7 +74,7 @@ PM2 (production, what `obelisk-price-bot` runs):
 ```bash
 npm run pm2:start    # uses ecosystem.config.js — preferred
 # or, ad-hoc:
-pm2 start bots/price-bot.mjs \
+pm2 start official/price-bot.mjs \
   --name obelisk-price-bot \
   --node-args="--env-file-if-exists=$PWD/.env.local"
 pm2 save
