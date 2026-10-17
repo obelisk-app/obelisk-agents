@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 440" width="1280" height="440" role="img" aria-labelledby="t d">
+<title id="t">Obelisk Agents</title>
+<desc id="d">A fleet of Nostr bots (price-bot, sat-ars-bot, Zap Bot, asados-bot) trading events with a NIP-29 relay.</desc>
+<defs>
+  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="#ffffff" stroke-opacity="0.045"/></pattern>
+  <radialGradient id="glowL" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#b4f953" stop-opacity="0.22"/><stop offset="1" stop-color="#b4f953" stop-opacity="0"/></radialGradient>
+  <radialGradient id="glowR" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#c5ff6e" stop-opacity="0.55"/><stop offset="1" stop-color="#b4f953" stop-opacity="0"/></radialGradient>
+  <linearGradient id="lime" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c5ff6e"/><stop offset="1" stop-color="#b4f953"/></linearGradient>
+  <linearGradient id="cardglow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b4f953" stop-opacity="0.12"/><stop offset="0.6" stop-color="#b4f953" stop-opacity="0"/></linearGradient>
+  <clipPath id="frame"><rect width="1280" height="440" rx="24"/></clipPath>
+</defs>
+<g clip-path="url(#frame)" font-family="Inter, 'Segoe UI', system-ui, -apple-system, Helvetica, Arial, sans-serif">
+  <rect width="1280" height="440" fill="#0a0a0a"/>
+  <rect width="1280" height="440" fill="url(#grid)"/>
+  <circle cx="300" cy="200" r="360" fill="url(#glowL)"/>
+  <path id="l0" d="M 800 90 L 930 230" stroke="#b4f953" stroke-opacity="0.25" stroke-width="2" stroke-dasharray="3 7" fill="none"><animate attributeName="stroke-dashoffset" from="0" to="-20" dur="1s" repeatCount="indefinite"/></path><circle r="4" fill="#c5ff6e"><animateMotion dur="2.2s" begin="0.0s" repeatCount="indefinite" path="M 800 90 L 930 230"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.85;1" dur="2.2s" begin="0.0s" repeatCount="indefinite"/></circle><circle r="3" fill="#8fd3ff"><animateMotion dur="2.6s" begin="1.0s" repeatCount="indefinite" path="M 930 230 L 800 90"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.85;1" dur="2.6s" begin="1.0s" repeatCount="indefinite"/></circle><path id="l1" d="M 1120 100 L 930 230" stroke="#b4f953" stroke-opacity="0.25" stroke-width="2" stroke-dasharray="3 7" fill="none"><animate attributeName="stroke-dashoffset" from="0" to="-20" dur="1s" repeatCount="indefinite"/></path><circle r="4" fill="#c5ff6e"><animateMotion dur="2.5s" begin="1.5s" repeatCount="indefinite" path="M 1120 100 L 930 230"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.85;1" dur="2.5s" begin="1.5s" repeatCount="indefinite"/></circle><circle r="3" fill="#8fd3ff"><animateMotion dur="2.9s" begin="2.5s" repeatCount="indefinite" path="M 930 230 L 1120 100"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.85;1" dur="2.9s" begin="2.5s" repeatCount="indefinite"/></circle><path id="l2" d="M 810 350 L 930 230" stroke="#b4f953" stroke-opacity="0.25" stroke-width="2" stroke-dasharray="3 7" fill="none"><animate attributeName="stroke-dashoffset" from="0" to="-20" dur="1s" repeatCount="indefinite"/></path><circle r="4" fill="#c5ff6e"><animateMotion dur="2.8s" begin="0.8s" repeatCount="indefinite" path="M 810 350 L 930 230"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.85;1" dur="2.8s" begin="0.8s" repeatCount="indefinite"/></circle><circle r="3" fill="#8fd3ff"><animateMotion dur="3.2s" begin="1.8s" repeatCount="indefinite" path="M 930 230 L 810 350"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.85;1" dur="3.2s" begin="1.8s" repeatCount="indefinite"/></circle><path id="l3" d="M 1130 360 L 930 230" stroke="#b4f953" stroke-opacity="0.25" stroke-width="2" stroke-dasharray="3 7" fill="none"><animate attributeName="stroke-dashoffset" from="0" to="-20" dur="1s" repeatCount="indefinite"/></path><circle r="4" fill="#c5ff6e"><animateMotion dur="3.1s" begin="2.2s" repeatCount="indefinite" path="M 1130 360 L 930 230"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.85;1" dur="3.1s" begin="2.2s" repeatCount="indefinite"/></circle><circle r="3" fill="#8fd3ff"><animateMotion dur="3.5s" begin="3.2s" repeatCount="indefinite" path="M 930 230 L 1130 360"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.85;1" dur="3.5s" begin="3.2s" repeatCount="indefinite"/></circle>
+  <circle cx="930" cy="230" r="70" fill="url(#glowR)"><animate attributeName="r" values="58;80;58" dur="3s" repeatCount="indefinite"/></circle>
+  <g transform="translate(930 230)">
+    <circle r="34" fill="#7c3aed" stroke="#c4b5fd" stroke-width="2"/>
+    <text y="12" font-size="34" font-weight="800" fill="#fff" text-anchor="middle">P</text>
+    <circle r="44" fill="none" stroke="#c5ff6e" stroke-opacity="0.6" stroke-width="2"><animate attributeName="r" values="36;70" dur="2.4s" repeatCount="indefinite"/><animate attributeName="stroke-opacity" values="0.7;0" dur="2.4s" repeatCount="indefinite"/></circle>
+    <rect x="-96" y="44" width="192" height="24" rx="12" fill="#141414" stroke="#2a2a2a"/>
+    <text y="61" font-size="12" fill="#d1d5db" text-anchor="middle" font-family="ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace">wss://public.obelisk.ar</text>
+  </g>
+  <g transform="translate(690 60)"><g>
+  <animateTransform attributeName="transform" type="translate" values="0 0;0 -8;0 0" dur="6s" begin="-0s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+  <rect width="220" height="60" rx="14" fill="#141414" stroke="#2a2a2a"/>
+  <rect width="220" height="60" rx="14" fill="url(#cardglow)"/>
+  <g transform="translate(4 4)"><circle cx="26" cy="26" r="20" fill="#f7931a"/><text x="26" y="34" font-size="22" font-weight="800" fill="#fff" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, Helvetica, Arial, sans-serif">₿</text></g>
+  <circle cx="44" cy="46" r="5" fill="#22c55e" stroke="#141414" stroke-width="2"><animate attributeName="opacity" values="1;0.35;1" dur="1.6s" repeatCount="indefinite"/></circle>
+  <text x="58" y="25" font-size="16" font-weight="700" fill="#fff">BTC 84,066<animate attributeName="opacity" values="1;1;0;0;1" keyTimes="0;0.45;0.5;0.95;1" dur="8s" repeatCount="indefinite"/></text><text x="58" y="25" font-size="16" font-weight="700" fill="#fff" opacity="0">BTC 82,924<animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.45;0.5;0.95;1" dur="8s" repeatCount="indefinite"/></text>
+  <text x="58" y="44" font-size="12" fill="#9ca3af" font-family="ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace">price-bot · <tspan fill="#b4f953">online</tspan></text>
+</g></g><g transform="translate(1010 70)"><g>
+  <animateTransform attributeName="transform" type="translate" values="0 0;0 -8;0 0" dur="7s" begin="-1.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+  <rect width="220" height="60" rx="14" fill="#141414" stroke="#2a2a2a"/>
+  <rect width="220" height="60" rx="14" fill="url(#cardglow)"/>
+  <g transform="translate(4 4)"><circle cx="26" cy="26" r="20" fill="#f7931a"/><text x="26" y="34" font-size="22" font-weight="800" fill="#fff" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, Helvetica, Arial, sans-serif">₿</text></g>
+  <circle cx="44" cy="46" r="5" fill="#22c55e" stroke="#141414" stroke-width="2"><animate attributeName="opacity" values="1;0.35;1" dur="1.8s" repeatCount="indefinite"/></circle>
+  <text x="58" y="25" font-size="16" font-weight="700" fill="#fff">sat 1,36 ARS</text>
+  <text x="58" y="44" font-size="12" fill="#9ca3af" font-family="ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace">sat-ars-bot · <tspan fill="#b4f953">online</tspan></text>
+</g></g><g transform="translate(700 320)"><g>
+  <animateTransform attributeName="transform" type="translate" values="0 0;0 -8;0 0" dur="6.5s" begin="-0.8s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+  <rect width="220" height="60" rx="14" fill="#141414" stroke="#2a2a2a"/>
+  <rect width="220" height="60" rx="14" fill="url(#cardglow)"/>
+  <g transform="translate(4 4)"><circle cx="26" cy="26" r="20" fill="#7c3aed"/><path d="M 29 12 L 17 29 L 25 29 L 22 41 L 35 23 L 27 23 Z" fill="#fff"/></g>
+  <circle cx="44" cy="46" r="5" fill="#22c55e" stroke="#141414" stroke-width="2"><animate attributeName="opacity" values="1;0.35;1" dur="2.0s" repeatCount="indefinite"/></circle>
+  <text x="58" y="25" font-size="16" font-weight="700" fill="#fff">⚡ Zap Bot</text>
+  <text x="58" y="44" font-size="12" fill="#9ca3af" font-family="ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace">zap-bot · <tspan fill="#b4f953">online</tspan></text>
+</g></g><g transform="translate(1020 330)"><g>
+  <animateTransform attributeName="transform" type="translate" values="0 0;0 -8;0 0" dur="7.5s" begin="-2.2s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+  <rect width="220" height="60" rx="14" fill="#141414" stroke="#2a2a2a"/>
+  <rect width="220" height="60" rx="14" fill="url(#cardglow)"/>
+  <g transform="translate(4 4)"><rect x="6" y="6" width="40" height="40" rx="10" fill="url(#lime)"/><text x="26" y="32" font-size="15" font-weight="800" fill="#0a0a0a" text-anchor="middle" font-family="Inter, 'Segoe UI', system-ui, -apple-system, Helvetica, Arial, sans-serif">AB</text></g>
+  <circle cx="44" cy="46" r="5" fill="#22c55e" stroke="#141414" stroke-width="2"><animate attributeName="opacity" values="1;0.35;1" dur="2.2s" repeatCount="indefinite"/></circle>
+  <text x="58" y="25" font-size="16" font-weight="700" fill="#fff">asados-bot</text>
+  <text x="58" y="44" font-size="12" fill="#9ca3af" font-family="ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace">asados-bot · <tspan fill="#b4f953">online</tspan></text>
+</g></g>
+  <!-- title -->
+  <g transform="translate(64 112)">
+    <rect width="64" height="64" rx="16" fill="url(#lime)"/>
+    <g fill="#0a0a0a"><rect x="17" y="22" width="30" height="24" rx="6"/><rect x="30" y="12" width="4" height="10"/><circle cx="32" cy="11" r="4"/></g>
+    <ellipse cx="26" cy="34" rx="4" ry="4" fill="#c5ff6e"><animate attributeName="ry" values="4;4;0.5;4" keyTimes="0;0.9;0.95;1" dur="4s" repeatCount="indefinite"/></ellipse>
+    <circle cx="38" cy="34" r="4" fill="#c5ff6e"/>
+    <text x="84" y="48" font-size="52" font-weight="800" fill="#ffffff" letter-spacing="-1.5">Obelisk <tspan fill="#b4f953">Agents</tspan></text>
+    <text x="0" y="122" font-size="26" font-weight="700" fill="#ffffff" letter-spacing="-0.3">Nostr bots for NIP-29 groups.</text>
+    <text x="0" y="158" font-size="16" fill="#9ca3af">Each bot holds its own nsec, talks straight to relays</text>
+    <text x="0" y="182" font-size="16" fill="#9ca3af">and runs under PM2. Scripted bots, or LLM agents.</text>
+    <g transform="translate(0 210)">
+      <rect width="196" height="30" rx="15" fill="#141414" stroke="#2a2a2a"/>
+      <circle cx="17" cy="15" r="5" fill="#22c55e"><animate attributeName="opacity" values="1;0.3;1" dur="1.4s" repeatCount="indefinite"/></circle>
+      <text x="30" y="20" font-size="13" font-weight="700" fill="#e5e7eb" font-family="ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace">agents.obelisk.ar</text>
+    </g>
+  </g>
+</g>
+</svg>

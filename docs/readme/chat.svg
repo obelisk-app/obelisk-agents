@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 460" width="1200" height="460" role="img" aria-labelledby="t d">
+<title id="t">Bots answering in an Obelisk channel</title>
+<desc id="d">jack types !btc and price-bot answers with the BTC/USD price; jack types !sat and sat-ars-bot answers in pesos; Zap Bot announces a 21-sat zap.</desc>
+<defs><clipPath id="frame"><rect width="1200" height="460" rx="20"/></clipPath>
+<radialGradient id="g" cx="0.6" cy="0.7" r="0.6"><stop offset="0" stop-color="#b4f953" stop-opacity="0.08"/><stop offset="1" stop-color="#b4f953" stop-opacity="0"/></radialGradient></defs>
+<g clip-path="url(#frame)" font-family="Inter, 'Segoe UI', system-ui, -apple-system, Helvetica, Arial, sans-serif">
+ <rect width="1200" height="460" fill="#0e0e10"/>
+ <rect x="216" width="984" height="460" fill="url(#g)"/>
+ <rect width="216" height="460" fill="#141416"/>
+ <text x="20" y="38" font-size="16" font-weight="700" fill="#fff">public.obelisk.ar</text>
+ <circle cx="196" cy="33" r="5" fill="#b4f953"/>
+ <text x="20" y="84" font-size="11" font-weight="700" fill="#71717a" letter-spacing="1">CHANNELS</text>
+ <g transform="translate(20 120)"><rect x="-8" y="-22" width="184" height="32" rx="8" fill="#b4f953" fill-opacity="0.16"/><text x="0" y="0" font-size="14" fill="#ffffff"># 💬 General Chat</text></g><g transform="translate(20 158)"><text x="0" y="0" font-size="14" fill="#a1a1aa"># 🟠 BITCOIN</text></g><g transform="translate(20 196)"><text x="0" y="0" font-size="14" fill="#a1a1aa"># 🙋 Introductions</text></g><g transform="translate(20 234)"><text x="0" y="0" font-size="14" fill="#a1a1aa"># 🎪 Showcase</text></g><g transform="translate(20 272)"><text x="0" y="0" font-size="14" fill="#a1a1aa"># 🪲 Feedback / Bugs</text></g><g transform="translate(20 310)"><text x="0" y="0" font-size="14" fill="#a1a1aa"># 🏃 RUNSTR</text></g>
+ <line x1="216" y1="0" x2="216" y2="460" stroke="#27272a"/>
+ <text x="240" y="40" font-size="17" font-weight="700" fill="#fff"><tspan fill="#71717a"># </tspan>💬 General Chat</text>
+ <line x1="216" y1="62" x2="1200" y2="62" stroke="#27272a"/>
+ <g opacity="0"><animate attributeName="opacity" dur="13.0s" repeatCount="indefinite" keyTimes="0.0000;0.0462;0.0654;0.9538;0.9846;1.0000" values="0;0;1;1;0;0"/>
+ <animateTransform attributeName="transform" type="translate" dur="13.0s" repeatCount="indefinite" keyTimes="0.0000;0.0462;0.0654;1.0000" values="0 10;0 10;0 0;0 0"/>
+ <g transform="translate(250 82)"><circle cx="20" cy="20" r="18" fill="#ec4899"/><text x="20" y="26" font-size="16" font-weight="800" fill="#fff" text-anchor="middle">J</text></g>
+ <text x="306" y="97" font-size="14.5" font-weight="700" fill="#f472b6">jack</text>
+ <g transform="translate(346 97)"></g>
+ <text x="306" y="120" font-size="15" fill="#e5e7eb" font-family="ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace">!btc</text>
+</g><g transform="translate(306 174)" opacity="0"><animate attributeName="opacity" dur="13.0s" repeatCount="indefinite" keyTimes="0.0000;0.0923;0.1000;0.1654;0.1692;1.0000" values="0;0;1;1;0;0"/>
+  <text x="0" y="0" font-size="12" fill="#9ca3af" font-style="italic">BTC 84,066 is typing</text>
+  <circle cx="126" cy="-4" r="3" fill="#b4f953"><animate attributeName="opacity" values="0.2;1;0.2" dur="0.9s" begin="0.0s" repeatCount="indefinite"/></circle><circle cx="136" cy="-4" r="3" fill="#b4f953"><animate attributeName="opacity" values="0.2;1;0.2" dur="0.9s" begin="0.15s" repeatCount="indefinite"/></circle><circle cx="146" cy="-4" r="3" fill="#b4f953"><animate attributeName="opacity" values="0.2;1;0.2" dur="0.9s" begin="0.3s" repeatCount="indefinite"/></circle>
+</g><g opacity="0"><animate attributeName="opacity" dur="13.0s" repeatCount="indefinite" keyTimes="0.0000;0.1692;0.1885;0.9538;0.9846;1.0000" values="0;0;1;1;0;0"/>
+ <animateTransform attributeName="transform" type="translate" dur="13.0s" repeatCount="indefinite" keyTimes="0.0000;0.1692;0.1885;1.0000" values="0 10;0 10;0 0;0 0"/>
+ <g transform="translate(250 148)"><circle cx="20" cy="20" r="18" fill="#f7931a"/><text x="20" y="27" font-size="19" font-weight="800" fill="#fff" text-anchor="middle">₿</text></g>
+ <text x="306" y="163" font-size="14.5" font-weight="700" fill="#ffffff">BTC 84,066</text>
+ <g transform="translate(398 163)"><rect x="0" y="-12" width="81" height="17" rx="5" fill="#b4f953" fill-opacity="0.14"/><text x="7" y="0" font-size="11" fill="#c5ff6e" font-family="ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace">price-bot</text></g>
+ <text x="306" y="186" font-size="15" fill="#e5e7eb">⚡ BTC/USD $84,066 (-0.05% 24h)</text>
+</g><g opacity="0"><animate attributeName="opacity" dur="13.0s" repeatCount="indefinite" keyTimes="0.0000;0.3077;0.3269;0.9538;0.9846;1.0000" values="0;0;1;1;0;0"/>
+ <animateTransform attributeName="transform" type="translate" dur="13.0s" repeatCount="indefinite" keyTimes="0.0000;0.3077;0.3269;1.0000" values="0 10;0 10;0 0;0 0"/>
+ <g transform="translate(250 214)"><circle cx="20" cy="20" r="18" fill="#ec4899"/><text x="20" y="26" font-size="16" font-weight="800" fill="#fff" text-anchor="middle">J</text></g>
+ <text x="306" y="229" font-size="14.5" font-weight="700" fill="#f472b6">jack</text>
+ <g transform="translate(346 229)"></g>
+ <text x="306" y="252" font-size="15" fill="#e5e7eb" font-family="ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace">!sat</text>
+</g><g transform="translate(306 306)" opacity="0"><animate attributeName="opacity" dur="13.0s" repeatCount="indefinite" keyTimes="0.0000;0.3538;0.3615;0.4269;0.4308;1.0000" values="0;0;1;1;0;0"/>
+  <text x="0" y="0" font-size="12" fill="#9ca3af" font-style="italic">sat 1,36 ARS is typing</text>
+  <circle cx="139" cy="-4" r="3" fill="#b4f953"><animate attributeName="opacity" values="0.2;1;0.2" dur="0.9s" begin="0.0s" repeatCount="indefinite"/></circle><circle cx="149" cy="-4" r="3" fill="#b4f953"><animate attributeName="opacity" values="0.2;1;0.2" dur="0.9s" begin="0.15s" repeatCount="indefinite"/></circle><circle cx="159" cy="-4" r="3" fill="#b4f953"><animate attributeName="opacity" values="0.2;1;0.2" dur="0.9s" begin="0.3s" repeatCount="indefinite"/></circle>
+</g><g opacity="0"><animate attributeName="opacity" dur="13.0s" repeatCount="indefinite" keyTimes="0.0000;0.4308;0.4500;0.9538;0.9846;1.0000" values="0;0;1;1;0;0"/>
+ <animateTransform attributeName="transform" type="translate" dur="13.0s" repeatCount="indefinite" keyTimes="0.0000;0.4308;0.4500;1.0000" values="0 10;0 10;0 0;0 0"/>
+ <g transform="translate(250 280)"><circle cx="20" cy="20" r="18" fill="#f7931a"/><text x="20" y="27" font-size="19" font-weight="800" fill="#fff" text-anchor="middle">₿</text></g>
+ <text x="306" y="295" font-size="14.5" font-weight="700" fill="#ffffff">sat 1,36 ARS</text>
+ <g transform="translate(415 295)"><rect x="0" y="-12" width="95" height="17" rx="5" fill="#b4f953" fill-opacity="0.14"/><text x="7" y="0" font-size="11" fill="#c5ff6e" font-family="ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace">sat-ars-bot</text></g>
+ <text x="306" y="318" font-size="15" fill="#e5e7eb">⚡ 1 sat = 1,36 ARS · 1k = 1.355 ARS · 10k = 13.550 ARS</text>
+</g><g opacity="0"><animate attributeName="opacity" dur="13.0s" repeatCount="indefinite" keyTimes="0.0000;0.6000;0.6192;0.9538;0.9846;1.0000" values="0;0;1;1;0;0"/>
+ <animateTransform attributeName="transform" type="translate" dur="13.0s" repeatCount="indefinite" keyTimes="0.0000;0.6000;0.6192;1.0000" values="0 10;0 10;0 0;0 0"/>
+ <g transform="translate(250 346)"><circle cx="20" cy="20" r="18" fill="#7c3aed"/><path d="M 23 7 L 12 23 L 19 23 L 16 34 L 28 18 L 21 18 Z" fill="#fff"/></g>
+ <text x="306" y="361" font-size="14.5" font-weight="700" fill="#ffffff">⚡ Zap Bot</text>
+ <g transform="translate(389 361)"><rect x="0" y="-12" width="66" height="17" rx="5" fill="#b4f953" fill-opacity="0.14"/><text x="7" y="0" font-size="11" fill="#c5ff6e" font-family="ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace">zap-bot</text></g>
+ <text x="306" y="384" font-size="15" fill="#e5e7eb">⚡ calle sent 21 satoshis to jack</text>
+</g><rect x="238" y="338" width="900" height="62" rx="10" fill="#c5ff6e" opacity="0"><animate attributeName="opacity" dur="13.0s" repeatCount="indefinite" keyTimes="0.0000;0.6000;0.6077;0.6923;1.0000" values="0;0;0.16;0;0"/></rect>
+ <g transform="translate(240 404)">
+  <rect width="936" height="40" rx="12" fill="#18181b" stroke="#27272a"/>
+  <g transform="translate(18 26)">
+   <text x="0" y="0" font-size="15" fill="#71717a">Message #General Chat<animate attributeName="opacity" dur="13.0s" repeatCount="indefinite" keyTimes="0.0000;0.0000;0.0038;0.0423;0.0462;0.2538;0.2577;0.3038;0.3077;1.0000" values="1;1;0;0;1;1;0;0;1;1"/></text>
+   <text x="0" y="0" font-size="15" fill="#e5e7eb" font-family="ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace" opacity="0">!btc<animate attributeName="opacity" dur="13.0s" repeatCount="indefinite" keyTimes="0.0000;0.0000;0.0038;0.0385;0.0423;1.0000" values="0;0;1;1;0;0"/></text><text x="0" y="0" font-size="15" fill="#e5e7eb" font-family="ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace" opacity="0">!sat<animate attributeName="opacity" dur="13.0s" repeatCount="indefinite" keyTimes="0.0000;0.2538;0.2577;0.3000;0.3038;1.0000" values="0;0;1;1;0;0"/></text>
+  </g>
+ </g>
+</g>
+</svg>

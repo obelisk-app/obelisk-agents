@@ -1,4 +1,33 @@
-# Obelisk Agents
+<div align="center">
+
+<a href="https://agents.obelisk.ar"><img src="docs/readme/hero.svg" alt="Obelisk Agents: a fleet of Nostr bots trading events with wss://public.obelisk.ar" width="100%"></a>
+
+<p>
+  <a href="https://agents.obelisk.ar"><img alt="Manager status" src="https://img.shields.io/website?url=https%3A%2F%2Fagents.obelisk.ar&style=for-the-badge&label=manager&up_message=online&up_color=b4f953&down_message=offline&down_color=ef4444&labelColor=0a0a0a"></a>
+  <a href="https://github.com/obelisk-app/obelisk-agents/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/obelisk-app/obelisk-agents?style=for-the-badge&logo=github&label=stars&color=b4f953&labelColor=0a0a0a"></a>
+  <a href="https://github.com/obelisk-app/obelisk-agents/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/obelisk-app/obelisk-agents?style=for-the-badge&color=c5ff6e&labelColor=0a0a0a"></a>
+  <a href="https://github.com/obelisk-app/obelisk-agents/graphs/commit-activity"><img alt="Commit activity" src="https://img.shields.io/github/commit-activity/m/obelisk-app/obelisk-agents?style=for-the-badge&color=c5ff6e&labelColor=0a0a0a"></a>
+</p>
+<p>
+  <img alt="Nostr NIP-29" src="https://img.shields.io/badge/nostr-NIP--29%20groups-7c3aed?style=flat-square&labelColor=0a0a0a">
+  <img alt="Node 20+" src="https://img.shields.io/badge/node-20%2B-5fa04e?style=flat-square&logo=nodedotjs&logoColor=white&labelColor=0a0a0a">
+  <img alt="nostr-tools" src="https://img.shields.io/badge/nostr--tools-SimplePool-b4f953?style=flat-square&labelColor=0a0a0a">
+  <img alt="PM2" src="https://img.shields.io/badge/supervised%20by-PM2-2b037a?style=flat-square&logo=pm2&logoColor=white&labelColor=0a0a0a">
+  <img alt="No build step" src="https://img.shields.io/badge/.mjs-no%20build%20step-f7df1e?style=flat-square&logo=javascript&logoColor=black&labelColor=0a0a0a">
+  <img alt="Preact manager" src="https://img.shields.io/badge/manager-Preact%20%2B%20Vite-673ab8?style=flat-square&logo=preact&logoColor=white&labelColor=0a0a0a">
+</p>
+
+<h3>
+  <a href="https://agents.obelisk.ar">🤖 Fleet manager</a>
+  &nbsp;·&nbsp;
+  <a href="https://obelisk.ar">🗿 Obelisk</a>
+  &nbsp;·&nbsp;
+  <a href="#quickstart-run-the-price-bot">⚡ Quickstart</a>
+  &nbsp;·&nbsp;
+  <a href="./docs/building-bots.md">🛠️ Build a bot</a>
+</h3>
+
+</div>
 
 Nostr bots for the Obelisk ecosystem (NIP-29 groups). Each bot is a small
 Node process that holds its own `nsec`, talks directly to relays, and
@@ -7,22 +36,75 @@ and **agents** (LLM-connected members that only hear whitelisted users; see
 [docs/agents.md](./docs/agents.md)). All are plain Nostr clients supervised
 by PM2, managed from https://agents.obelisk.ar.
 
-<p>
-  <a href="https://github.com/obelisk-app/obelisk-agents/stargazers"><img src="https://img.shields.io/github/stars/obelisk-app/obelisk-agents?style=flat&logo=github&color=b4f953&labelColor=0a0a0a" alt="GitHub stars" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/obelisk-app/obelisk-agents?style=flat&color=b4f953&labelColor=0a0a0a" alt="License" /></a>
-</p>
+## 💬 Say `!btc`, get an answer
 
-## The Obelisk family
+<div align="center">
+  <img src="docs/readme/chat.svg" alt="In #General Chat, jack types !btc and price-bot answers with the BTC/USD price; jack types !sat and sat-ars-bot answers in pesos; Zap Bot announces a 21-sat zap" width="100%">
+</div>
+
+<table>
+<tr>
+<td width="50%"><img src="docs/readme/shots/zap-bot-in-obelisk.jpg" alt="Zap Bot posting in an Obelisk channel"></td>
+<td width="50%"><img src="docs/readme/shots/fleet.jpg" alt="The fleet page on agents.obelisk.ar"></td>
+</tr>
+<tr>
+<td><b>Bots are real group members.</b> Zap Bot introducing itself in an Obelisk channel. Note the price bot's name in the corner: its kind:0 display name <i>is</i> the ticker.</td>
+<td><b>The fleet at agents.obelisk.ar.</b> Every bot with its live Nostr profile, status, uptime, memory and last log line. Restart or stop in one click.</td>
+</tr>
+</table>
+
+<img src="docs/readme/divider.svg" alt="" width="100%">
+
+## 🤖 The bots
+
+| Bot | Talks | What it does |
+|---|---|---|
+| ₿ **price-bot** | `!btc` `!price` `!ath` `!stats` `!help` | BTC/USD from CoinGecko. Also a *profile ticker*: its display name is the price. |
+| 🇦🇷 **sat-ars-bot** | `!sat` `!sats` `!btc` `!ars` `!stats` `!help` | sat/ARS from yadio.io: what a sat is worth in pesos, and the other way round |
+| ⚡ **zap-bot** | — | Announces zap receipts (kind 9735) as they happen: `⚡ calle sent 21 satoshis to jack` |
+| 🏆 **lacrypta-ranks** | `!rangos` `!ranking` `!milugar` `!perfil` `!xpinfo` `!cierre` `!fbi` … | Nostr port of La Crypta's Discord ranks bot: XP for messages, reactions and zaps, levels and a fortnightly ranking |
+| 🥩 **asados-bot** | `!asado` | Last checked price per kg of tapa de asado at DIA Argentina |
+| 🥟 **empanadas-price-bot** | `!empanada` | The current empanada price in Buenos Aires |
+| 🐟 **precio-latas-atun** | `!atun` | Last checked price of a 170 g DIA tuna can |
+| 🧠 **agents** | when mentioned | LLM-connected members, scaffolded with `new-bot --agent`. They only hear whitelisted users. |
+
+Each bot's commands live next to it in `bots/<name>.commands.json`.
+
+## ⌨️ From zero to a bot in a group
+
+<div align="center">
+  <img src="docs/readme/terminal.svg" alt="Example terminal session: npm run new-bot -- welcome-bot prints the bot's identity and next steps; npm run pm2:start and pm2 logs obelisk-price-bot show price-bot connecting to wss://public.obelisk.ar and replying to !btc" width="100%">
+</div>
+
+<details>
+<summary><b>📸 More of the manager</b></summary>
+<br>
+<table>
+<tr>
+<td width="72%"><img src="docs/readme/shots/bot-profile.jpg" alt="A bot's page: its Nostr profile (kind 0) editor"></td>
+<td width="28%"><img src="docs/readme/shots/fleet-mobile.jpg" alt="The fleet page on a phone"></td>
+</tr>
+<tr>
+<td>A bot's page: edit its Nostr profile (kind 0), signed with the bot's own key. Pictures upload to Blossom.</td>
+<td>The fleet on a phone.</td>
+</tr>
+</table>
+</details>
+
+<img src="docs/readme/divider.svg" alt="" width="100%">
+
+## 🌐 The Obelisk family
 
 | Repo | What |
 |------|------|
-| [obelisk-app/obelisk](https://github.com/obelisk-app/obelisk) | The chat app (relay-only) |
-| [obelisk-app/obelisk-relay](https://github.com/obelisk-app/obelisk-relay) | NIP-29 groups relay |
-| [obelisk-app/obelisk-sfu](https://github.com/obelisk-app/obelisk-sfu) | mediasoup SFU for voice |
-| [**obelisk-app/obelisk-agents**](https://github.com/obelisk-app/obelisk-agents) | This repo — bots toolkit |
-| [obelisk-app/obelisk-classic](https://github.com/obelisk-app/obelisk-classic) | The original centralized stack |
+| 🗿 [obelisk-app/obelisk](https://github.com/obelisk-app/obelisk) | The chat app (relay-only) · [obelisk.ar](https://obelisk.ar) |
+| 📡 [obelisk-app/obelisk-relay](https://github.com/obelisk-app/obelisk-relay) | NIP-29 groups relay |
+| 🎙️ [obelisk-app/obelisk-sfu](https://github.com/obelisk-app/obelisk-sfu) | mediasoup SFU for voice |
+| 🏝️ [obelisk-app/obelisk-sky](https://github.com/obelisk-app/obelisk-sky) | A 3D village client · [sky.obelisk.ar](https://sky.obelisk.ar) |
+| 🤖 [**obelisk-app/obelisk-agents**](https://github.com/obelisk-app/obelisk-agents) | This repo — bots toolkit |
+| 🏛️ [obelisk-app/obelisk-classic](https://github.com/obelisk-app/obelisk-classic) | The original centralized stack |
 
-## What's in here
+## 🗂️ What's in here
 
 ```
 bots/                 one .mjs file per long-running bot
@@ -49,12 +131,12 @@ lib/                  shared helpers (parseSecret, createPool with NIP-42 auth)
   group-watcher.mjs       dynamic NIP-29 group discovery (kind 39000 watcher)
 server/               management API (Nostr auth, PM2 control, env editor, Codex operator)
 frontend/             management UI (Preact + Vite + Tailwind) → https://agents.obelisk.ar
-ecosystem.config.js   PM2 process list — one entry per bot
+ecosystem.config.cjs  PM2 process list — one entry per bot
 .env.example          copy to .env.local and fill in
 docs/                 design notes (taxonomy, admin-bot pattern, discovery)
 ```
 
-## Web manager — agents.obelisk.ar
+## 🖥️ Web manager — agents.obelisk.ar
 
 The fleet has a web control plane at **https://agents.obelisk.ar** (the older
 bots.obelisk.ar URL still works as an alias) (code in
@@ -76,7 +158,7 @@ Admin allow-list: `MANAGER_ADMIN_NPUBS` in `.env.local` (defaults to the
 owner npub). Local dev: `npm run frontend:build && npm run manager`,
 then open http://127.0.0.1:3021.
 
-## Install
+## 📦 Install
 
 ```bash
 git clone https://github.com/obelisk-app/obelisk-agents.git
@@ -118,7 +200,7 @@ automatically — no `dotenv` dependency.
    pm2 logs obelisk-price-bot
    ```
 
-## Bot taxonomy
+## 🧬 Bot taxonomy
 
 | Type | Identity | Privileges needed | Examples |
 |---|---|---|---|
@@ -130,7 +212,7 @@ automatically — no `dotenv` dependency.
 A single bot can wear multiple hats (price-bot is a profile bot first; once
 admin adds it to a group it's also a member bot).
 
-## Conventions
+## 📐 Conventions
 
 - **Language**: Node ESM. Plain `.mjs` under `bots/`. No build step.
 - **Nostr lib**: `nostr-tools` (`SimplePool`, `finalizeEvent`, `nip19`,
@@ -148,11 +230,11 @@ admin adds it to a group it's also a member bot).
   multi-filter REQs. Use `pool.subscribe(relays, singleFilter, params)`,
   not `subscribeMany`.
 
-## Operations
+## 🔧 Operations
 
 | Task | Command |
 |---|---|
-| Start every bot in `ecosystem.config.js` | `npm run pm2:start` |
+| Start every bot in `ecosystem.config.cjs` | `npm run pm2:start` |
 | Restart all bots | `npm run pm2:restart` |
 | Tail logs | `npm run pm2:logs` |
 | Restart one bot | `pm2 restart obelisk-price-bot` |
@@ -160,7 +242,7 @@ admin adds it to a group it's also a member bot).
 | Decode an nsec → npub | `npm run whoami -- BOT_NSEC` |
 | Discover group ids | `npm run list-groups -- wss://public.obelisk.ar` |
 
-## Security notes
+## 🔐 Security notes
 
 - Bot nsecs are functionally root for that identity. Treat `.env.local`
   like a credential store.
@@ -172,7 +254,7 @@ admin adds it to a group it's also a member bot).
   suspect compromise (and re-issue the kind 9000 add-user with the new
   pubkey).
 
-## See also
+## 📚 See also
 
 - [AGENT.md](./AGENT.md) — cheat sheet for coding terminal agents (Claude
   Code, Codex, Cursor) to drive this repo.
@@ -188,3 +270,15 @@ admin adds it to a group it's also a member bot).
   moderation bots.
 - [docs/discovery.md](./docs/discovery.md) — how to enumerate groups on a
   relay.
+
+<div align="center">
+<br>
+<a href="https://star-history.com/#obelisk-app/obelisk-agents&Date">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=obelisk-app/obelisk-agents&type=Date&theme=dark">
+    <img alt="Star history of obelisk-app/obelisk-agents" src="https://api.star-history.com/svg?repos=obelisk-app/obelisk-agents&type=Date" width="600">
+  </picture>
+</a>
+
+If a bot made your group better, a ⭐ helps other communities find them.
+</div>

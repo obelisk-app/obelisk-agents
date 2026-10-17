@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 36" width="1200" height="36" role="img" aria-label="divider">
+  <defs>
+    <linearGradient id="l" gradientUnits="userSpaceOnUse" x1="40" y1="0" x2="1160" y2="0"><stop offset="0" stop-color="#86c93a" stop-opacity="0"/><stop offset="0.5" stop-color="#86c93a"/><stop offset="1" stop-color="#b4f953" stop-opacity="0"/></linearGradient>
+    <radialGradient id="g" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#d9ff9c"/><stop offset="1" stop-color="#b4f953" stop-opacity="0"/></radialGradient>
+  </defs>
+  <line x1="40" y1="18" x2="1160" y2="18" stroke="url(#l)" stroke-width="4" stroke-dasharray="0.1 12" stroke-linecap="round">
+    <animate attributeName="stroke-dashoffset" from="0" to="-24" dur="1.2s" repeatCount="indefinite"/>
+  </line>
+  <circle cx="600" cy="18" r="16" fill="url(#g)"><animate attributeName="r" values="12;20;12" dur="3s" repeatCount="indefinite"/></circle>
+  <path d="M 600 4 L 604 9 L 606 30 L 594 30 L 596 9 Z" fill="#b4f953" stroke="#5a8f1f" stroke-width="1.2" stroke-linejoin="round"/>
+  <circle r="4" fill="#c5ff6e"><animateMotion dur="5s" repeatCount="indefinite" path="M 80 18 L 560 18"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.8;1" dur="5s" repeatCount="indefinite"/></circle>
+  <circle r="4" fill="#c5ff6e"><animateMotion dur="5s" repeatCount="indefinite" path="M 1120 18 L 640 18"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.8;1" dur="5s" repeatCount="indefinite"/></circle>
+</svg>
